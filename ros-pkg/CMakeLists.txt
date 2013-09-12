@@ -4,7 +4,7 @@ project(kuk_a_droid)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS youbot_ros_tools)
+find_package(catkin REQUIRED COMPONENTS youbot_control youbot_description youbot_gazebo)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -51,7 +51,7 @@ find_package(catkin REQUIRED COMPONENTS youbot_ros_tools)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES kuk_a_droid
-#  CATKIN_DEPENDS youbot_ros_tools
+#  CATKIN_DEPENDS youbot_control youbot_description youbot_gazebo 
 #  DEPENDS system_lib
 )
 
