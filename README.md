@@ -5,15 +5,16 @@ How to transform the KUKA youBot mobile manipulator into your buddy!
 
 Quick start
 ===========
-ln -s ~/Documents/GitHub/kuk-A-droid/ros-pkg ~/Documents/catkin_ws/src/kuk_a_droid
-roscd kuk_a_droid
+
++ Have a look at the installation instructions in the wiki
++ Read the wiki home page for a short description of the project
 
 Bugs and feature requests
 =========================
 
 Documentation
 =============
-
+Documentation is considered as a key component of this project.
 
 Contributing
 ============
