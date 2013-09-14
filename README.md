@@ -13,7 +13,7 @@ As a side project, a part of the technical landscape will be based on an Android
 Crazy isn'y-it? Yes, and that's the fun!
 
 Quick start
-=========
+===========
 
 + Consider that everything is strongly experimental
 + Read the wiki home page for a full introduction to the project
@@ -22,15 +22,27 @@ Quick start
 + Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
 Documentation
-============
-Documentation is considered as a key component of this project.
+=============
 
+Documentation is considered as a key component of this project. Best efforts will be delivered to keep the documentation synthetic, up-to-date, meaningful, relevant, logical and natural.
+
+The GitHub wiki is the reference for the written documentation. General and detailed design, global architecture and landscape, technical references will be stored there.
+
+This concern also covers the code. Every piece of code is expected to be properly commented according to the standard coding conventions.
 
 Contributing
 ============
 
+This project is absolutely OPEN. HRI is a multidisciplinary field, and kuk-A-droid makes no exception. Whatever your background, if you feel motivated by the project, you can contribute.
+
+The project is currently looking for a community manager, to extent the project out of GitHub only and have a better chance to federate people around it.
+
 Bugs and feature requests
-=====================
+=========================
+
+Bugs are taken in a broad understanding. They may be related to programs error, but also to the documentation (if you consider it as not clear), to the design and even to the project organisation.
+
+Bugs and additional features should be posted in the issue tracker.
 
 Community
 =========
