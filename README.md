@@ -3,8 +3,7 @@ kuk-A-droid
 
 How to transform the KUKA youBot mobile manipulator into your buddy!
 
-The big idea
-============
+## The big idea
 
 Kuk-A-droid is a human-robot interaction (HRI) project. Several famous robots designed for social interactions have a shape closed to humans, like a full humanoid body or a human-like face. This project takes the opportunity of the KUKA innovation award to design what would be social interactions in the case of a robot with no human attributes, the youBot.
 
@@ -12,8 +11,7 @@ As a side project, a part of the technical landscape will be based on an Android
 
 Crazy isn'y-it? Yes, and that's the fun!
 
-Quick start
-===========
+## Quick start
 
 + Consider that everything is strongly experimental
 + Read the wiki home page for a full introduction to the project
@@ -21,8 +19,7 @@ Quick start
 + Browse the wiki for detail descriptions of the concepts and the design
 + Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
-Documentation
-=============
+## Documentation
 
 Documentation is considered as a key component of this project. Best efforts will be delivered to keep the documentation synthetic, up-to-date, meaningful, relevant, logical and natural.
 
@@ -30,8 +27,7 @@ The GitHub wiki is the reference for the written documentation. General and deta
 
 This concern also covers the code. Every piece of code is expected to be properly commented according to the standard coding conventions.
 
-Contributing
-============
+## Contributing
 
 This project is absolutely OPEN. HRI is a multidisciplinary field, and kuk-A-droid makes no exception. Whatever your background, if you feel motivated by the project, you can contribute.
 
