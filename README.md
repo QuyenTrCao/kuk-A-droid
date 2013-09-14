@@ -14,8 +14,8 @@ Crazy isn'y-it? Yes, and that's the fun!
 ## Quick start
 
 + Consider that everything is strongly experimental
-+ Read the wiki home page for a full introduction to the project
-+ Refer to the road-map to know the last achievements
++ Read the [wiki home page](https://github.com/Arn-O/kuk-A-droid/wiki) for a full introduction to the project
++ Refer to the [road-map](https://github.com/Arn-O/kuk-A-droid/wiki/2.-Road-map) to know the last achievements
 + Browse the wiki for detail descriptions of the concepts and the design
 + Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
@@ -33,21 +33,18 @@ This project is absolutely OPEN. HRI is a multidisciplinary field, and kuk-A-dro
 
 The project is currently looking for a community manager, to extent the project out of GitHub only and have a better chance to federate people around it.
 
-Bugs and feature requests
-=========================
+## Bugs and feature requests
 
 Bugs are taken in a broad understanding. They may be related to programs error, but also to the documentation (if you consider it as not clear), to the design and even to the project organisation.
 
 Bugs and additional features should be posted in the issue tracker.
 
-Community
-=========
+## Community
 
 
-Authors
-=======
+## Authors
 
 
-Copyright and license
-=====================
+## Copyright and license
 
+Copyright 2013 Arn-O under the [MIT license](https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE).
