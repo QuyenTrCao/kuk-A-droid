@@ -13,21 +13,24 @@ As a side project, a part of the technical landscape will be based on an Android
 Crazy isn'y-it? Yes, and that's the fun!
 
 Quick start
-===========
+=========
 
-+ Read the wiki home page for a short description of the project
-+ Have a look at the installation instructions in the wiki
-
-Bugs and feature requests
-=========================
++ Consider that everything is strongly experimental
++ Read the wiki home page for a full introduction to the project
++ Refer to the road-map to know the last achievements
++ Browse the wiki for detail descriptions of the concepts and the design
++ Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
 Documentation
-=============
+============
 Documentation is considered as a key component of this project.
+
 
 Contributing
 ============
 
+Bugs and feature requests
+=====================
 
 Community
 =========
