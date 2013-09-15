@@ -41,10 +41,12 @@ Bugs and additional features should be posted in the issue tracker.
 
 ## Community
 
+GitHub is the meeting point of the community. The project just starts, so the community is very limited.
 
 ## Authors
 
+@Arn_O
 
 ## Copyright and license
 
-Copyright 2013 Arn-O under the [MIT license](https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE).
+Copyright 2013 Arn-O under [the MIT license](https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE).
