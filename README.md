@@ -45,7 +45,9 @@ GitHub is the meeting point of the community. The project just starts, so the co
 
 ## Authors
 
-@Arn_O
+**Arn_O:**
++ https://github.com/Arn-O
++ https://twitter.com/A_rnO_
 
 ## Copyright and license
 
