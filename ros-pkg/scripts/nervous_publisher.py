@@ -11,7 +11,9 @@ The values can come from the onboarded device (aware mode) or from the teleop
 program (zombie mode).
 '''
 
-from kuk_a_droid.srv.SetNervousMode  import SetNervousMode
+import roslib; roslib.load_manifest('kuk_a_droid')
+
+from kuk_a_droid.srv import *
 import rospy
 
 # global constants
