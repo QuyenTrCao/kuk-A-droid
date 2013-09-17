@@ -14,8 +14,8 @@ Crazy isn'y-it? Yes, and that's the fun!
 ## Quick start
 
 + Consider that everything is strongly experimental
-+ Read the [wiki home page](https://github.com/Arn-O/kuk-A-droid/wiki) for a full introduction to the project
-+ Refer to the [road-map](https://github.com/Arn-O/kuk-A-droid/wiki/2.-Road-map) to know the last achievements
++ Read the [wiki home page](https://github.com/Arn-O/kuk-A-droid/wiki) for a deeper insight of the project
++ Refer to the [roadmap](https://github.com/Arn-O/kuk-A-droid/wiki/Roadmap) to know the last achievements
 + Browse the wiki for detail descriptions of the concepts and the design
 + Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
@@ -45,7 +45,7 @@ GitHub is the meeting point of the community. The project just starts, so the co
 
 ## Authors
 
-**Arn_O:**
+**Arn-O:**
 + https://github.com/Arn-O
 + https://twitter.com/A_rnO_
 
