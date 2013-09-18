@@ -20,11 +20,12 @@ find_package(catkin REQUIRED COMPONENTS youbot_control youbot_description youbot
 #######################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Emotions.msg
+  Behaviors.msg
+  NervStates.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
