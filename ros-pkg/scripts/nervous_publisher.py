@@ -14,7 +14,7 @@ program (zombie mode).
 from kuk_a_droid.msg import *
 
 import rospy
-import roslib; roslib.load_manifest('kuk_a_droid')
+#import roslib; roslib.load_manifest('kuk_a_droid')
 import random
 import argparse
 
@@ -25,8 +25,6 @@ PUBLISHER_NAME = 'nervous_states'
 DEFAULT_FREQUENCY = 25
 
 # affective parameter
-NERVOUS_MODES = ['aware', 'zombie']
-DEFAULT_NERVOUS_MODE = 'aware'
 # note: emotions and behaviors are listed in the following orders
 # emotions = anger frustration fear distress disgust sorrow surprise interest calm boredom joy
 # behaviors = seek-people seek-toy sleep
@@ -40,8 +38,6 @@ DEFAULT_BEHAVIOR = 'sleep'
 
 def stop_node():
     '''Clean stuff here.'''
-    rospy.delete_param('~mode')
-    rospy.logwarn('Nervous publisher has stopped - Bye!')
 
 def get_nerv_msg(emotions, behaviors):
     '''Convert emotions and behaviors lists to msg.'''
@@ -74,10 +70,6 @@ def nervous_publisher(freq, ref_emotions, ref_behaviors):
 def main():
     '''Where everything starts.'''
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mode",
-            choices=NERVOUS_MODES,
-            default=DEFAULT_NERVOUS_MODE,
-            help='aware = autonomous / zombie = teleop')
     parser.add_argument("-f", "--frequency",
             type=int,
             default=DEFAULT_FREQUENCY,
@@ -92,7 +84,6 @@ def main():
             help='level of activation of the emotion (max = 1000)')
 
     args = parser.parse_args()
-    nervous_mode = args.mode
     pub_freq = args.frequency
 
     emotions = [0] * 11
@@ -101,8 +92,6 @@ def main():
         
     rospy.init_node(NODE_NAME)
     rospy.on_shutdown(stop_node)
-    rospy.set_param('~mode', nervous_mode)
-    rospy.loginfo('Nervous system started in %s mode, this can be changed using services', nervous_mode)
     
     try:
         nervous_publisher(pub_freq, emotions, behaviors)
