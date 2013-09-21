@@ -11,11 +11,12 @@ The values can come from the onboarded device (aware mode) or from the teleop
 program (zombie mode).
 '''
 
-import roslib; roslib.load_manifest('kuk_a_droid')
-import argparse
-
 from kuk_a_droid.msg import *
+
 import rospy
+import roslib; roslib.load_manifest('kuk_a_droid')
+import random
+import argparse
 
 # global constants
 # ROS parameters
@@ -43,17 +44,31 @@ def stop_node():
     rospy.logwarn('Nervous publisher has stopped - Bye!')
 
 def get_nerv_msg(emotions, behaviors):
-    '''Convert emotions and behaviors lists to msg'''
+    '''Convert emotions and behaviors lists to msg.'''
     emot_param = Emotions(*emotions)
     behav_param = Behaviors(*behaviors)
     nerv_msg = NervStates(emot_param, behav_param)
     return nerv_msg
 
-def nervous_publisher(freq, emotions, behaviors):
+def add_random(val, max_var):
+    '''Add a random value in limits.'''
+    val = val +  random.randint(-max_var, max_var)
+    if val < 0: val = 0
+    if val > 1000: val = 1000
+    return val
+
+def add_noise(states, max_var):
+    '''Add noise to affective states.'''
+    states = [add_random(state, max_var) for state in states]
+    print states
+    return states
+
+def nervous_publisher(freq, ref_emotions, ref_behaviors):
     '''Publisher loop'''
     pub = rospy.Publisher(PUBLISHER_NAME, NervStates)
     while not rospy.is_shutdown():
-        msg = get_nerv_msg(emotions, behaviors)
+        emotions = add_noise(ref_emotions, 50)
+        msg = get_nerv_msg(emotions, ref_behaviors)
         pub.publish(msg)
         rospy.sleep(1.0 / freq)
 
@@ -74,8 +89,8 @@ def main():
             help='emotion')
     parser.add_argument("-a", "--activation",
             type=int,
-            default=1000,
-            help='level of activation of the emotion (max = 1.000)')
+            default=950,
+            help='level of activation of the emotion (max = 1000)')
 
     args = parser.parse_args()
     nervous_mode = args.mode
