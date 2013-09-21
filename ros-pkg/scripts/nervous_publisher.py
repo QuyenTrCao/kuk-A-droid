@@ -60,7 +60,6 @@ def add_random(val, max_var):
 def add_noise(states, max_var):
     '''Add noise to affective states.'''
     states = [add_random(state, max_var) for state in states]
-    print states
     return states
 
 def nervous_publisher(freq, ref_emotions, ref_behaviors):
