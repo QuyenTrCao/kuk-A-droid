@@ -7,14 +7,13 @@
 '''
 This program is a component of the kuk-A-droid project.
 It will publish to ROS topics the valuation of the emotions and the behaviors.
-The values can come from the onboarded device (aware mode) or from the teleop
-program (zombie mode).
+This version is designed for testing only. The emotion should be passed as a
+parameter.
 '''
 
 from kuk_a_droid.msg import *
 
 import rospy
-#import roslib; roslib.load_manifest('kuk_a_droid')
 import random
 import argparse
 
