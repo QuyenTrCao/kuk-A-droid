@@ -39,6 +39,7 @@ def main():
     clockwise = 1
     while not rospy.is_shutdown():
         msg = JointState()
+        msg.header.stamp = rospy.Time.now()
         msg.name = JOINT_ARRAY
         msg.position = [0.00, 0.00, 0.00, joint_4_pos, 0.00, 0.00, 0.00]
         pub_js.publish(msg)
