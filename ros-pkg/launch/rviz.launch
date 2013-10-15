@@ -1,0 +1,23 @@
+<!-- Copyright 2013 Arn-O. See the LICENSE file at the top-level directory of this distribution and at https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE. -->
+
+<launch>
+  <!-- setting param to be used later by the rviz config file -->
+  <param name="robot_description"
+    command="$(find xacro)/xacro.py '$(find youbot_description)/urdf/youbot.urdf.xacro'" />
+
+  <!-- motor skills of joint states publisher -->
+  <node name="motor_skills" pkg="kuk_a_droid" type="motor_skills.py" />
+
+  <!-- send fake joint values -->
+  <!-- node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="FALSE" />
+    <rosparam param="source_list">["motor_skills/joint_states"]</rosparam>
+  </node -->
+
+  <!-- Combine joint values -->
+  <!-- node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/ -->
+
+  <!-- Show in Rviz -->
+  <!-- node name="rviz" pkg="rviz" type="rviz" args="-d $(find youbot_description)/launch/kuk_a_droid.rviz" respawn="true"/ -->
+
+</launch>
