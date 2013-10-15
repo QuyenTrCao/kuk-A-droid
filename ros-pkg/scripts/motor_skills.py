@@ -14,8 +14,6 @@ from kuk_a_droid.msg import *
 from sensor_msgs.msg import JointState
 
 import rospy
-#TODO: post that argpase is not recognize by roslaunch
-import argparse
 
 # global constants
 
@@ -25,14 +23,8 @@ DEFAULT_FREQUENCY = 25
 JOINT_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
 
 def main():
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("-f", "--frequency",
-    #    type=int,
-    #    default=DEFAULT_FREQUENCY,
-    #    help='nervous publisher frequency')
-    #args = parser.parse_args()
-    #pub_freq = args.frequency
-    pub_freq = 25
+    #TODO: create a parameter on the parameter server for the frequence
+    pub_freq = DEFAULT_FREQUENCY
     rospy.init_node(NODE_NAME)
     pub_js = rospy.Publisher(TOPIC_JOINT_STATES, JointState)
     speed_rot = 0.1

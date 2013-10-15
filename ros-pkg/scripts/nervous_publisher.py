@@ -15,7 +15,6 @@ from kuk_a_droid.msg import *
 
 import rospy
 import random
-import argparse
 
 # global constants
 # ROS parameters
@@ -68,26 +67,15 @@ def nervous_publisher(freq, ref_emotions, ref_behaviors):
 
 def main():
     '''Where everything starts.'''
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--frequency",
-            type=int,
-            default=DEFAULT_FREQUENCY,
-            help='nervous publisher frequency')
-    parser.add_argument("-e", "--emotion",
-            choices=EMOTIONS_DICT.keys(),
-            default=DEFAULT_EMOTION,
-            help='emotion')
-    parser.add_argument("-a", "--activation",
-            type=int,
-            default=950,
-            help='level of activation of the emotion (max = 1000)')
+    frequency = DEFAULT_FREQUENCY
+    emotion = DEFAULT_EMOTION
+    activation = 950
 
-    args = parser.parse_args()
-    pub_freq = args.frequency
+    pub_freq = frequency
 
     emotions = [0] * 11
     behaviors = [0] * 3
-    emotions[EMOTIONS_DICT.get(args.emotion)] = args.activation
+    emotions[EMOTIONS_DICT.get(emotion)] = activation
         
     rospy.init_node(NODE_NAME)
     rospy.on_shutdown(stop_node)
