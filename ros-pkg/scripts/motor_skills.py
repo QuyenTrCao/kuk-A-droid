@@ -20,25 +20,45 @@ import rospy
 NODE_NAME = 'motor_skills'
 TOPIC_JOINT_STATES = '~joint_states'
 DEFAULT_FREQUENCY = 25
-JOINT_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
+JOINT_NAME_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
+
+# global variales
+    
+#TODO: create a parameter on the parameter server for the frequence
+pub_freq = DEFAULT_FREQUENCY
+# ROS variables
+rospy.init_node(NODE_NAME)
+pub_js = rospy.Publisher(TOPIC_JOINT_STATES, JointState)
+joints_pos = [0.0] * 7 
+
+
+def publish_position():
+    '''joint position publisher'''    
+    msg = JointState()
+    msg.header.stamp = rospy.Time.now()
+    msg.name = JOINT_NAME_ARRAY
+    msg.position = joints_pos
+    pub_js.publish(msg)
+
+def prim_wrist(tar_pos, speed):
+    '''primitive for the wrist (arm_5_joint)'''
+    cur_pos = joints_pos[4]
+    if cur_pos == tar_pos:
+        return True
+    else:
+        rot_speed = (speed * 0.2) + 0.1
+        next_pos = cur_pos + ((tar_pos - cur_pos) * rot_speed / pub_freq)
+        joints_pos[4] = next_pos
+    return False
 
 def main():
-    #TODO: create a parameter on the parameter server for the frequence
-    pub_freq = DEFAULT_FREQUENCY
-    rospy.init_node(NODE_NAME)
-    pub_js = rospy.Publisher(TOPIC_JOINT_STATES, JointState)
-    speed_rot = 0.1
-    joint_4_pos = -1.7
-    clockwise = 1
+    counter = 0
     while not rospy.is_shutdown():
-        msg = JointState()
-        msg.header.stamp = rospy.Time.now()
-        msg.name = JOINT_ARRAY
-        msg.position = [0.00, 0.00, 0.00, joint_4_pos, 0.00, 0.00, 0.00]
-        pub_js.publish(msg)
-        joint_4_pos = joint_4_pos + (speed_rot * (1.0 / pub_freq) * clockwise)
-        if joint_4_pos < -1.7 or joint_4_pos > 1.7:
-            clockwise = clockwise * -1
+        print counter
+        if counter > 100:
+            completion = prim_wrist(1.0, 3)
+        publish_position()
+        counter = counter + 1
         rospy.sleep(1.0 / pub_freq)
     print 'Bye!'
 

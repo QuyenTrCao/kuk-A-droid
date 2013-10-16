@@ -62,6 +62,36 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        arm_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base_footprint:
           Alpha: 1
           Show Axes: false
@@ -72,38 +102,42 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        caster_link_bl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_br:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_fl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_fr:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_link_bl:
+        finger_left_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheel_link_br:
+        finger_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheel_link_fl:
+        gripper_base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheel_link_fr:
+        plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_bl_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_br_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_fl_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_fr_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -118,6 +152,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Fixed Frame: base_footprint
+    Frame Rate: 30
   Name: root
   Tools:
     - Class: rviz/Interact
@@ -137,11 +172,11 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.00361
+      Distance: 1.57631
       Focal Point:
-        X: 0.215108
-        Y: -0.0798822
-        Z: -0.142876
+        X: 0.0552752
+        Y: -0.173159
+        Z: 0.122939
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 0.600563
