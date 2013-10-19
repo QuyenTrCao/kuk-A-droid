@@ -71,14 +71,29 @@ def prim_wrist(tar_pos, speed):
         joints_pos[4] = next_pos
     return False
 
+def prim_arm(tar_pos1, tar_pos2, tar_pos3, speed):
+    '''primitive of the arm'''
+    cur_pos1 = joints_pos[1]
+    cur_pos2 = joints_pos[2]
+    cur_pos3 = joints_pos[3]
+    if cur_pos1 == tar_pos1 and cur_pos2 == tar_pos2 and cur_pos3 == tar_pos3:
+        return True
+    else:
+        rot_speed = (speed * 0.2) + 0.1
+        next_pos1 = cur_pos1 + ((tar_pos1 - cur_pos1) * rot_speed / pub_freq)
+        joints_pos[1] = next_pos1
+        next_pos2 = cur_pos2 + ((tar_pos2 - cur_pos2) * rot_speed / pub_freq)
+        joints_pos[2] = next_pos2
+        next_pos3 = cur_pos3 + ((tar_pos3 - cur_pos3) * rot_speed / pub_freq)
+        joints_pos[3] = next_pos3
+    return False
+
 def main():
-    counter = 0
     while not rospy.is_shutdown():
-        print counter
         is_wrist_done = prim_wrist(0.1, 0)
         is_finger_done = prim_fingers(0.010, 0.010, 0)
+        is_arm_done = prim_arm(0.5, -0.5, 1.4, 2)
         publish_position()
-        counter = counter + 1
         rospy.sleep(1.0 / pub_freq)
     print 'Bye!'
 
