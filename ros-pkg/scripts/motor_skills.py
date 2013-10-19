@@ -40,6 +40,26 @@ def publish_position():
     msg.position = joints_pos
     pub_js.publish(msg)
 
+def prim_fingers(tar_pos, aperture, speed):
+    '''primitive for the fingers'''
+    '''positive position = right'''
+    cur_pos_l = joints_pos[5]
+    cur_pos_r = joints_pos[6]
+    tar_pos_l = (tar_pos * -1) + (aperture / 2)
+    tar_pos_r = tar_pos + (aperture / 2)
+
+    if cur_pos_l == tar_pos_l and cur_pos_r == tar_pos_r:
+        return True
+    else:
+        lin_speed = (speed * 0.2) + 0.1
+        next_pos_l = cur_pos_l + ((tar_pos_l - cur_pos_l)
+                * lin_speed / pub_freq)
+        next_pos_r = cur_pos_r + ((tar_pos_r - cur_pos_r)
+                * lin_speed / pub_freq)
+        joints_pos[5] = next_pos_l
+        joints_pos[6] = next_pos_r
+    return False
+
 def prim_wrist(tar_pos, speed):
     '''primitive for the wrist (arm_5_joint)'''
     cur_pos = joints_pos[4]
@@ -55,8 +75,8 @@ def main():
     counter = 0
     while not rospy.is_shutdown():
         print counter
-        if counter > 100:
-            completion = prim_wrist(1.0, 3)
+        is_wrist_done = prim_wrist(0.1, 0)
+        is_finger_done = prim_fingers(0.010, 0.010, 0)
         publish_position()
         counter = counter + 1
         rospy.sleep(1.0 / pub_freq)
