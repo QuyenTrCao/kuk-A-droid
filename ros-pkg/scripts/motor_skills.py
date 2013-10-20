@@ -44,6 +44,7 @@ def publish_position():
     msg.position = joints_pos
     pub_js.publish(msg)
 
+# robot primitive for controlling group of joints
 def prim_fingers(tar_pos, aperture, speed):
     '''primitive for the fingers'''
     '''positive position = right'''
@@ -92,21 +93,42 @@ def prim_arm(tar_pos1, tar_pos2, tar_pos3, speed):
         joints_pos[3] = next_pos3
     return False
 
+def calm():
+    '''demonstrate calm'''
+    arousal = 3
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.010, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.40, arousal)
+    
+    # arm
+    arm_pos = list(CALM_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def interest():
+    '''demonstrate calm'''
+    arousal = 3
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.020, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(INTEREST_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
 def main():
+    seq = {0:calm, 1:interest, 2:calm, 3:interest, 4:calm}
     start_time = rospy.Time.now().secs
     while not rospy.is_shutdown():
         loop_time = rospy.Time.now().secs
         duration = loop_time - start_time
-        is_finger_done = prim_fingers(0.000, 0.010, 3)
-        is_wrist_done = prim_wrist(0.00, 3)
-        arm_pos = list(CALM_POS)
-        arm_pos.append(1)
-        print arm_pos
-        is_arm_done = prim_arm(*arm_pos)
-        if duration > 15:
-            arm_pos = list(INTEREST_POS)
-            arm_pos.append(3)
-            is_arm_done = prim_arm(*arm_pos)
+        index = (duration / 15)
+        seq[index]()
         publish_position()
         rospy.sleep(1.0 / pub_freq)
     print 'Bye!'
