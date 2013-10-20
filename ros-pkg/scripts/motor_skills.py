@@ -16,11 +16,15 @@ from sensor_msgs.msg import JointState
 import rospy
 
 # global constants
-
+# ROS constants
 NODE_NAME = 'motor_skills'
 TOPIC_JOINT_STATES = '~joint_states'
 DEFAULT_FREQUENCY = 25
 JOINT_NAME_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
+
+# affective constants
+CALM_POS = (-0.62, 1.44, 1.11)
+INTEREST_POS = (-0.51, 0.71, 0.86)
 
 # global variales
     
@@ -89,10 +93,20 @@ def prim_arm(tar_pos1, tar_pos2, tar_pos3, speed):
     return False
 
 def main():
+    start_time = rospy.Time.now().secs
     while not rospy.is_shutdown():
-        is_wrist_done = prim_wrist(0.1, 0)
-        is_finger_done = prim_fingers(0.010, 0.010, 0)
-        is_arm_done = prim_arm(0.5, -0.5, 1.4, 2)
+        loop_time = rospy.Time.now().secs
+        duration = loop_time - start_time
+        is_finger_done = prim_fingers(0.000, 0.010, 3)
+        is_wrist_done = prim_wrist(0.00, 3)
+        arm_pos = list(CALM_POS)
+        arm_pos.append(1)
+        print arm_pos
+        is_arm_done = prim_arm(*arm_pos)
+        if duration > 15:
+            arm_pos = list(INTEREST_POS)
+            arm_pos.append(3)
+            is_arm_done = prim_arm(*arm_pos)
         publish_position()
         rospy.sleep(1.0 / pub_freq)
     print 'Bye!'
