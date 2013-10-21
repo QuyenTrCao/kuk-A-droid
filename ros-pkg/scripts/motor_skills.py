@@ -80,7 +80,7 @@ def prim_wrist(tar_pos, speed):
     if cur_pos == tar_pos:
         return True
     else:
-        rot_speed = (speed * 0.2) + 0.1
+        rot_speed = (speed * 0.22) + 0.12
         next_pos = cur_pos + ((tar_pos - cur_pos) * rot_speed / pub_freq)
         joints_pos[4] = next_pos
     return False
@@ -94,11 +94,23 @@ def prim_arm(tar_pos1, tar_pos2, tar_pos3, speed):
         return True
     else:
         rot_speed = (speed * 0.2) + 0.1
-        next_pos1 = cur_pos1 + ((tar_pos1 - cur_pos1) * rot_speed / pub_freq)
+        if abs(tar_pos1 - cur_pos1) > (rot_speed / pub_freq):
+            clockwise = (tar_pos1 - cur_pos1) / abs(tar_pos1 - cur_pos1)
+            next_pos1 = cur_pos1 + (clockwise * rot_speed / pub_freq)
+        else:
+            next_pos1 = tar_pos1
         joints_pos[1] = next_pos1
-        next_pos2 = cur_pos2 + ((tar_pos2 - cur_pos2) * rot_speed / pub_freq)
+        if abs(tar_pos2 - cur_pos2) > (rot_speed / pub_freq):
+            clockwise = (tar_pos2 - cur_pos2) / abs(tar_pos2 - cur_pos2)
+            next_pos2 = cur_pos2 + (clockwise * rot_speed / pub_freq)
+        else:
+            next_pos2 = tar_pos2
         joints_pos[2] = next_pos2
-        next_pos3 = cur_pos3 + ((tar_pos3 - cur_pos3) * rot_speed / pub_freq)
+        if abs(tar_pos3 - cur_pos3) > (rot_speed / pub_freq):
+            clockwise = (tar_pos3 - cur_pos3) / abs(tar_pos3 - cur_pos3)
+            next_pos3 = cur_pos3 + (clockwise * rot_speed / pub_freq)
+        else:
+            next_pos3 = tar_pos3
         joints_pos[3] = next_pos3
     return False
 
@@ -264,8 +276,7 @@ def main():
     while not rospy.is_shutdown():
         loop_time = rospy.Time.now().secs
         duration = loop_time - start_time
-        index = (duration / 15)
-        rospy.loginfo('Index: %i', index)
+        index = (duration / 7)
         seq[index]()
         publish_position()
         # TODO: use the frequence synchronisation

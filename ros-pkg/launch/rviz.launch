@@ -9,7 +9,7 @@
   <node name="nervous_publisher" pkg="kuk_a_droid" type="nervous_publisher.py" />
 
   <!-- motor skills published joint states -->
-  <node name="motor_skills" pkg="kuk_a_droid" type="motor_skills.py" />
+  <!-- node name="motor_skills" pkg="kuk_a_droid" type="motor_skills.py" / -->
 
   <!-- send fake joint values -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
