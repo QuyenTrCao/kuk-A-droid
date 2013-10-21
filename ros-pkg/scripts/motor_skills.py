@@ -23,18 +23,27 @@ DEFAULT_FREQUENCY = 25
 JOINT_NAME_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
 
 # affective constants
-CALM_POS = (-0.62, 1.44, 1.11)
+# reference position of the arm
+ANGER_POS = (0.62, 0.07, 0.36)
+FRUSTRATION_POS = (0.08, 0.02, -0.36)
+FEAR_POS = (-0.99, 0.12, 1.79)
+DISTRESS_POS = (0.39, 1.16, 0.78)
+DISGUST_POS = (-0.08, 2.38, 0.03)
+SORROW_POS = (1.57, 0.10, 1.79)
+SURPRISE_POS = (-0.43, -0.23, 0.67)
 INTEREST_POS = (-0.51, 0.71, 0.86)
+CALM_POS = (-0.62, 1.44, 1.11)
+BOREDOM_POS = (0.43, 1.53, 1.11)
+JOY_POS = (-0.96, 0.31, 0.86)
 
 # global variales
     
-#TODO: create a parameter on the parameter server for the frequence
+# TODO: create a parameter on the parameter server for the frequence
 pub_freq = DEFAULT_FREQUENCY
 # ROS variables
 rospy.init_node(NODE_NAME)
 pub_js = rospy.Publisher(TOPIC_JOINT_STATES, JointState)
 joints_pos = [0.0] * 7 
-
 
 def publish_position():
     '''joint position publisher'''    
@@ -93,22 +102,107 @@ def prim_arm(tar_pos1, tar_pos2, tar_pos3, speed):
         joints_pos[3] = next_pos3
     return False
 
-def calm():
-    '''demonstrate calm'''
+# emotion skills
+def anger():
+    '''demonstrate anger'''
+    arousal = 4
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.022, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(ANGER_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def frustration():
+    '''demonstrate frustration'''
     arousal = 3
     # fingers
     is_finger_done = prim_fingers(0.000, 0.010, arousal)
     
     # wrist
-    is_wrist_done = prim_wrist(0.40, arousal)
+    is_wrist_done = prim_wrist(1.50, arousal)
     
     # arm
-    arm_pos = list(CALM_POS)
+    arm_pos = list(FRUSTRATION_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def fear():
+    '''demonstrate fear'''
+    arousal = 4
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.000, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(FEAR_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def distress():
+    '''demonstrate distress'''
+    arousal = 4
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.000, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(DISTRESS_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def disgust():
+    '''demonstrate disgust'''
+    arousal = 2
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.000, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(DISGUST_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def sorrow():
+    '''demonstrate sorrow'''
+    arousal = 0
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.000, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(SORROW_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def surprise():
+    '''demonstrate surprise'''
+    arousal = 4
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.000, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.00, arousal)
+    
+    # arm
+    arm_pos = list(SURPRISE_POS)
     arm_pos.append(arousal)
     is_arm_done = prim_arm(*arm_pos)
 
 def interest():
-    '''demonstrate calm'''
+    '''demonstrate interest'''
     arousal = 3
     # fingers
     is_finger_done = prim_fingers(0.000, 0.020, arousal)
@@ -121,15 +215,60 @@ def interest():
     arm_pos.append(arousal)
     is_arm_done = prim_arm(*arm_pos)
 
+def calm():
+    '''demonstrate calm'''
+    arousal = 1
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.010, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.40, arousal)
+    
+    # arm
+    arm_pos = list(CALM_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def boredom():
+    '''demonstrate boredom'''
+    arousal = 1
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.010, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.40, arousal)
+    
+    # arm
+    arm_pos = list(BOREDOM_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
+def joy():
+    '''demonstrate joy'''
+    arousal = 3
+    # fingers
+    is_finger_done = prim_fingers(0.000, 0.010, arousal)
+    
+    # wrist
+    is_wrist_done = prim_wrist(0.40, arousal)
+    
+    # arm
+    arm_pos = list(JOY_POS)
+    arm_pos.append(arousal)
+    is_arm_done = prim_arm(*arm_pos)
+
 def main():
-    seq = {0:calm, 1:interest, 2:calm, 3:interest, 4:calm}
+    seq = {0:calm, 1:anger, 2:frustration, 3:fear, 4:distress, 5:disgust, 
+            6:sorrow, 7:surprise, 8:interest, 9:calm, 10:boredom, 11:joy}
     start_time = rospy.Time.now().secs
     while not rospy.is_shutdown():
         loop_time = rospy.Time.now().secs
         duration = loop_time - start_time
         index = (duration / 15)
+        rospy.loginfo('Index: %i', index)
         seq[index]()
         publish_position()
+        # TODO: use the frequence synchronisation
         rospy.sleep(1.0 / pub_freq)
     print 'Bye!'
 
