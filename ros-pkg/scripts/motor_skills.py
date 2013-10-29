@@ -273,10 +273,14 @@ def main():
     seq = {0:calm, 1:anger, 2:frustration, 3:fear, 4:distress, 5:disgust, 
             6:sorrow, 7:surprise, 8:interest, 9:calm, 10:boredom, 11:joy}
     start_time = rospy.Time.now().secs
+    cur_emotion = None
     while not rospy.is_shutdown():
         loop_time = rospy.Time.now().secs
         duration = loop_time - start_time
         index = (duration / 7)
+        if seq[index].__name__ != cur_emotion:
+            cur_emotion = seq[index].__name__
+            rospy.loginfo("Emotion state changes to %s", cur_emotion)
         seq[index]()
         publish_position()
         # TODO: use the frequence synchronisation
