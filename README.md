@@ -3,6 +3,11 @@ kuk-A-droid
 
 How to transform the KUKA youBot mobile manipulator into your buddy!
 
+## News
+
++ **We are looking for 3D graphics animator.** Check full details [here][4].
++ The application form has been sent on time.
+
 ## The big idea
 
 Kuk-A-droid is a human-robot interaction (HRI) project. Several famous robots designed for social interactions have a shape closed to humans, like a full humanoid body or a human-like face. This project takes the opportunity of the KUKA innovation award to design what would be social interactions in the case of a robot with no human attributes, the youBot.
