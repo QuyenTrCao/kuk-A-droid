@@ -14,8 +14,8 @@ Crazy isn'y-it? Yes, and that's the fun!
 ## Quick start
 
 + Consider that everything is strongly experimental
-+ Read the [wiki home page](https://github.com/Arn-O/kuk-A-droid/wiki) for a deeper insight of the project
-+ Refer to the [roadmap](https://github.com/Arn-O/kuk-A-droid/wiki/Roadmap) to know the last achievements
++ Read the [wiki home page][1] for a deeper insight of the project
++ Refer to the [roadmap][2] to know the last achievements
 + Browse the wiki for detail descriptions of the concepts and the design
 + Refer to the installation instructions to learn in detail the technical architecture and/or contribute
 
@@ -31,7 +31,9 @@ This concern also covers the code. Every piece of code is expected to be properl
 
 This project is absolutely OPEN. HRI is a multidisciplinary field, and kuk-A-droid makes no exception. Whatever your background, if you feel motivated by the project, you can contribute.
 
-The project is currently looking for a community manager, to extent the project out of GitHub only and have a better chance to federate people around it.
+We are looking for 3D graphics animator. Check full details [here][4].
+
+The project is also currently looking for a community manager, to extent the project out of GitHub only and have a better chance to federate people around it.
 
 ## Bugs and feature requests
 
@@ -51,4 +53,9 @@ GitHub is the meeting point of the community. The project just starts, so the co
 
 ## Copyright and license
 
-Copyright 2013 Arn-O under [the MIT license](https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE).
+Copyright 2013 Arn-O under [the MIT license][3].
+
+[1]: https://github.com/Arn-O/kuk-A-droid/wiki
+[2]: https://github.com/Arn-O/kuk-A-droid/wiki/Roadmap
+[3]: https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE
+[4]: https://github.com/Arn-O/kuk-A-droid/wiki/Call-for-contribution:-3D-graphics-animator
