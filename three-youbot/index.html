@@ -156,8 +156,9 @@
 
 			function loadRobot() {
 				var sea3dStandard = true;
-				var matBasic = new THREE.MeshPhongMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
-				
+				//var matBasic = new THREE.MeshPhongMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
+				var matBasic = new THREE.MeshLambertMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
+
 				if (sea3dStandard)
 					camera.scale.set(-1, 1, 1);
 				
@@ -182,7 +183,8 @@
 				var wheelTexture = new THREE.ImageUtils.loadTexture("images/wheel.jpg");
 				wheelTexture.repeat.set( 1, -1 );
 				wheelTexture.wrapS = wheelTexture.wrapT = THREE.RepeatWrapping;
-				var wheelMaterial = new THREE.MeshPhongMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
+				//var wheelMaterial = new THREE.MeshPhongMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
+				var wheelMaterial = new THREE.MeshLambertMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
 				youbot.add( base );
 
 				for(var i=0; i!==4;i++){
@@ -262,7 +264,7 @@
 
 				youbot.position.x += controls.tx;
 				youbot.position.z += controls.tz;
-				
+
 				// wheel animation
 				var wSpeed = delta * controls.wheelRotation;
 				for(var i=0; i!==4;i++){
