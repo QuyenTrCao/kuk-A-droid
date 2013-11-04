@@ -1,17 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>SEA3D File Format - WebGL</title>
+		<title>Three YouBot</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<meta property="og:image" content="http://sea3d.googlecode.com/svn/tags/SEA3D-Mascot.jpg"/>
-		<meta property="og:title" content="SEA3D File Format - WebGL"/>
-		<meta property="og:url" content="http://sea3d.poonya.com/webgl/"/>
-		<meta property="og:site_name" content="SEA3D File Format"/>
-		<meta property="og:type" content="website"/>
-		<meta property="og:description" content="A file format for games"/>
+		<meta property="og:title" content="Three Youbot - WebGL"/>
+		<meta property="og:description" content="Robot simulation demo"/>
 		<meta name="language" content="en-us" />
-		<link rel="shortcut icon" href="http://sea3d.googlecode.com/svn/tags/ico.png" type="image/x-icon" />
 		<style>
 			body {
 				font-family: Monospace;
@@ -44,7 +39,7 @@
 
 	<body>		
 		<div id="info"></div>
-		<div id="loading"><img src="images/ajax-loader.gif" alt="Loading SEA3D File."></div>
+		<div id="loading"><img src="images/ajax-loader.gif" alt="Loading youbot robot"></div>
 		<script src="js/three.min.js"></script>	
 		<script src="js/tweenLite.min.js"></script>
 		<script src="js/CameraLoth.js"></script>	
@@ -58,21 +53,15 @@
 		<script src="js/postprocessing/ShaderPass.js"></script>
 		<script src="js/postprocessing/MaskPass.js"></script> 
 		<script src="js/shaders/CopyShader.js"></script>
-		
 		<script src="js/shaders/ColorCorrectionShader.js"></script>
-		<script src="js/shaders/VignetteShader.js"></script>
 
-		
 		<script>								
 			var container, info;
-			var infos
-
 			var cam, scene, renderer, clock, loader, composer, renderPass, delta, sunLight;
-
-			var mouseX = 0, mouseY = 0;
 			var ToRad = Math.PI / 180;
-			var wheel_geometry_r, wheel_geometry_l;
-			//mesh
+			// geometry
+			var wheel_geo_r, wheel_geo_l;
+			// mesh
 			var wheels = [];
 			var base;
 			var youbot;
@@ -81,12 +70,12 @@
 			
 
 			function init() {
-				
 				container = document.createElement( 'div' );
 				container.style.position = "absolute";
 				document.body.appendChild( container );
 				
 				clock = new THREE.Clock();
+
 				// Scene
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0x121212 , 200, 1000 );
@@ -94,7 +83,7 @@
 				camera.aspect = window.innerWidth / (window.innerHeight-4);
 				camera.updateProjectionMatrix();
 
-				// Lights
+				// Lights and shadow
 				var ambient = new THREE.AmbientLight( 0x505050);
 				scene.add( ambient );												
 				
@@ -167,7 +156,7 @@
 
 			function loadRobot() {
 				var sea3dStandard = true;
-				var mat01 = new THREE.MeshPhongMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
+				var matBasic = new THREE.MeshPhongMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
 				
 				if (sea3dStandard)
 					camera.scale.set(-1, 1, 1);
@@ -176,11 +165,10 @@
 				
 				loader.onComplete = function( e ) {
 					for (var i=0; i !== loader.meshes.length; i++){
-						loader.meshes[i].material = mat01;
-
+						loader.meshes[i].material = matBasic;
 						if(loader.meshes[i].name === "base_frame" ) base = loader.meshes[i];
-						if(loader.meshes[i].name === "bot_wheel_R" ) wheel_geometry_r = loader.meshes[i].geometry;
-						if(loader.meshes[i].name === "bot_wheel_L" ) wheel_geometry_l = loader.meshes[i].geometry;
+						if(loader.meshes[i].name === "bot_wheel_R" ) wheel_geo_r = loader.meshes[i].geometry;
+						if(loader.meshes[i].name === "bot_wheel_L" ) wheel_geo_l = loader.meshes[i].geometry;
 					}
 					createRobot();
 					document.getElementById('loading').style.visibility = 'hidden';
@@ -196,11 +184,10 @@
 				wheelTexture.wrapS = wheelTexture.wrapT = THREE.RepeatWrapping;
 				var wheelMaterial = new THREE.MeshPhongMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
 				youbot.add( base );
-				//base.position.set(0, 8.4, 0);
 
 				for(var i=0; i!==4;i++){
-					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geometry_r, wheelMaterial);
-					else wheels[i] = new THREE.Mesh( wheel_geometry_l, wheelMaterial);
+					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, wheelMaterial);
+					else wheels[i] = new THREE.Mesh( wheel_geo_l, wheelMaterial);
 					
 					if(i===0) wheels[i].position.set(-22.5, 5, -15.8);
 					if(i===1) wheels[i].position.set(-22.5, 5, 15.8);
@@ -240,7 +227,6 @@
 				//if ( key[3] || key[2]) controls.speed = clamp( controls.speed + 1 * delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 
 				// speed decay
-				//if(!controls.lateral){
 				if ( ! ( key[0] || key[1]) ) {
 					if ( controls.speed > 0 ) {
 						var k = exponentialEaseOut( controls.speed / controls.maxSpeed );
@@ -276,6 +262,7 @@
 
 				youbot.position.x += controls.tx;
 				youbot.position.z += controls.tz;
+				
 				// wheel animation
 				var wSpeed = delta * controls.wheelRotation;
 				for(var i=0; i!==4;i++){
