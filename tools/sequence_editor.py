@@ -122,13 +122,17 @@ class SequenceEditor(cmd.Cmd):
         last_frame = max(self.keyframes['frames'])
         logging.debug('Last frame number %i:', last_frame)
         for i in range(last_frame + 1):
-            print('Frame: %i / %i ' % (i, last_frame)),
-            print('- time:'),
-            print('- type: '),
-            if i in keyframes['frames']:
-                print "K"
+            print('Fr. %i / %i ' % (i, last_frame)),
+            print('- t. '),
+            print('- ty. '),
+            if i in self.keyframes['frames']:
+                print "K",
+                print ' - pose ',
+                print self.keyframes['frames'][i]
             else:
-                print "I"
+                print "I",
+                print ' - pose ',
+                # i_pose = i_bezier(p_start, p_end)
         is_frame0(self.keyframes)
         
     def do_EOF(self, line):
