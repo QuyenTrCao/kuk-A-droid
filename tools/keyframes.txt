@@ -1,0 +1,17 @@
+(dp0
+S'frames'
+p1
+(dp2
+I0
+(lp3
+F0.02
+asI100
+(lp4
+F0.1
+asI350
+(lp5
+F0.0
+assS'frequency'
+p6
+I60
+s.
