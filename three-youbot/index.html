@@ -63,7 +63,7 @@
 			var wheel_geo_r, wheel_geo_l;
 			// mesh
 			var wheels = [];
-			var base;
+			var base, plate, arm_base, arm_joint_1;
 			var youbot;
 
 			window.onload = init;
@@ -84,28 +84,28 @@
 				camera.updateProjectionMatrix();
 
 				// Lights and shadow
-				var ambient = new THREE.AmbientLight( 0x505050);
+				var ambient = new THREE.AmbientLight( 0x333333);
 				scene.add( ambient );												
 				
-				var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.5 );
-				hemiLight.color.setHex( 0xFFFFFF );
-				hemiLight.groundColor.setHex( 0x505050 );
+				var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.3 );
+				hemiLight.color.setHex( 0xfeffe6 );
+				hemiLight.groundColor.setHex( 0x303030 );
 				hemiLight.position.set( 0, 500, 0 );
 				scene.add( hemiLight );
 
-				sunLight = new THREE.DirectionalLight( 0xffffff );
-				sunLight.intensity = 0.6;
+				sunLight = new THREE.DirectionalLight( 0xe6f3ff );
+				sunLight.intensity = 0.5;
 				sunLight.castShadow = true;
 
 				sunLight.shadowCameraNear = 100;
 				sunLight.shadowCameraFar = 500;
 				
 				sunLight.shadowMapBias = 0.01;
-				sunLight.shadowMapDarkness = 0.7;
-				sunLight.shadowMapWidth = 1024;
-				sunLight.shadowMapHeight = 1024;
+				sunLight.shadowMapDarkness = 0.3;
+				sunLight.shadowMapWidth =1024;
+				sunLight.shadowMapHeight =1024;
 
-				var lightSize = 200;
+				var lightSize = 130;
 
 				sunLight.shadowCameraLeft = -lightSize;
 				sunLight.shadowCameraRight = lightSize;
@@ -129,7 +129,8 @@
 				renderPass = new THREE.RenderPass( scene, camera );
 				var copyPass = new THREE.ShaderPass( THREE.CopyShader );				
 				composer.addPass( renderPass );
-				var vh = 1.6, vl = 1.2;
+				//var vh = 1.6, vl = 1.2;
+				var vh = 1.05, vl = 1.2;
 				var colorCorrectionPass = new THREE.ShaderPass( THREE.ColorCorrectionShader );
 				colorCorrectionPass.uniforms[ "powRGB" ].value = new THREE.Vector3( vh, vh, vh );
 				colorCorrectionPass.uniforms[ "mulRGB" ].value = new THREE.Vector3( vl, vl, vl );
@@ -178,16 +179,55 @@
 			}
 
 			function createRobot() {
+				var i;
 				youbot = new THREE.Object3D();
 				scene.add(youbot);
-				var wheelTexture = new THREE.ImageUtils.loadTexture("images/wheel.jpg");
-				wheelTexture.repeat.set( 1, -1 );
-				wheelTexture.wrapS = wheelTexture.wrapT = THREE.RepeatWrapping;
-				//var wheelMaterial = new THREE.MeshPhongMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
-				var wheelMaterial = new THREE.MeshLambertMaterial( { map: wheelTexture, shininess:100, specular:0x404040 } );
+				// textures
+				var textures = [];
+				textures[0] = new THREE.ImageUtils.loadTexture("images/base.jpg");
+				textures[1] = new THREE.ImageUtils.loadTexture("images/wheel.jpg");
+				textures[2] = new THREE.ImageUtils.loadTexture("images/base_frame.jpg");
+				textures[3] = new THREE.ImageUtils.loadTexture("images/joint1.jpg");
+				textures[4] = new THREE.ImageUtils.loadTexture("images/plate.jpg");
+				for(i = 0; i!== textures.length; i++){
+					textures[i].repeat.set( 1, -1 );
+				    textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+				    textures[i].anisotropy = renderer.getMaxAnisotropy();
+				}
+
+				// material
+				var shine = 10;
+				var specular = 0x606060;
+				var baseMaterial = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
+				var wheelMaterial = new THREE.MeshPhongMaterial( { map: textures[1], shininess:shine, specular:specular } );
+				var armBaseMaterial = new THREE.MeshPhongMaterial( { map: textures[2], shininess:shine, specular:specular } );
+				var joint1Material = new THREE.MeshPhongMaterial( { map: textures[3], shininess:shine, specular:specular } );
+				var plateMaterial = new THREE.MeshPhongMaterial( { map: textures[4], shininess:shine, specular:specular } );
+
+				/*var baseMaterial = new THREE.MeshLambertMaterial( { map: textures[0], shininess:100, specular:0x404040 } );
+				var wheelMaterial = new THREE.MeshLambertMaterial( { map: textures[1], shininess:100, specular:0x404040 } );
+				var armBaseMaterial = new THREE.MeshLambertMaterial( { map: textures[2], shininess:100, specular:0x404040 } );
+				var joint1Material = new THREE.MeshLambertMaterial( { map: textures[3], shininess:100, specular:0x404040 } );
+				var plateMaterial = new THREE.MeshLambertMaterial( { map: textures[4], shininess:100, specular:0x404040 } );*/
+
+				// detect mesh
+				var name;
+				for(i = 0; i!== base.children.length; i++){
+					name = base.children[i].name;
+					if(name === "arm_base_frame") arm_base = base.children[i]
+					if(name === "plate") plate = base.children[i]
+				}
+				arm_joint_1 = arm_base.children[0];
+
+				// apply material
+				base.material = baseMaterial;
+				plate.material = plateMaterial;
+				arm_base.material = armBaseMaterial;
+				arm_joint_1.material = joint1Material;
+
 				youbot.add( base );
 
-				for(var i=0; i!==4;i++){
+				for(i=0; i!==4;i++){
 					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, wheelMaterial);
 					else wheels[i] = new THREE.Mesh( wheel_geo_l, wheelMaterial);
 					
