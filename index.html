@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Three YouBot</title>
+		<title>Kuk-a-droid</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<meta property="og:title" content="Three Youbot - WebGL"/>
@@ -32,27 +32,35 @@
 			    position: fixed;
 			    top: 50%;
 			    left: 50%;
+			    pointer-events: none;
 			}
-			#info a, .button { color: #999; font-weight: bold; text-decoration: underline; cursor: pointer }
+			.unselectable{
+			    -moz-user-select: none;
+			    -ms-user-select: none;
+			    -khtml-user-select: none;
+			    -webkit-user-select: none;
+			    -o-user-select: none;
+			}
 		</style>
 	</head>
 
 	<body>
-	    <div id="container"></div>	
-		<div id="info"></div>
-		<div id="gui"></div>
-		<div id="loading"><img src="images/ajax-loader.gif" alt="Loading youbot robot"></div>
+	    <div id="container" class="unselectable"></div>	
+		<div id="info" class="unselectable"></div>
+		<div id="gui" class="unselectable"></div>
+		<div id="loading" class="unselectable"><img src="webdemo/assets/ajax-loader.gif" alt="Loading youbot robot"></div>
 
-		<script src="js/three.min.js"></script>	
-		<script src="js/tweenLite.min.js"></script>
-		<script src="js/CameraLoth.js"></script>	
-		<script src="js/loaders/sea3d/SEA3D.js"></script>
-		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-		<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
-		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
-		<script src='js/dat.gui.min.js'></script>
+		<script src="webdemo/js/three.min.js"></script>	
+		<script src="webdemo/js/tweenLite.min.js"></script>
+		<script src="webdemo/js/CameraLoth.js"></script>	
+		<script src="webdemo/js/loaders/sea3d/SEA3D.js"></script>
+		<script src="webdemo/js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script src="webdemo/js/loaders/sea3d/SEA3DDeflate.js"></script>
+		<script src="webdemo/js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src='webdemo/js/dat.gui.min.js'></script>
 
-		<script>								
+		<script>
+		    var AssetsFolder = "webdemo/assets/";
 			var container, info, gui;
 			var cam, scene, renderer, clock, loader, composer, renderPass, delta, sunLight;
 			var ToRad = Math.PI / 180;
@@ -60,7 +68,7 @@
 			var wheel_geo_r, wheel_geo_l;
 			// mesh
 			var wheels = [];
-			var base, plate, arm_base, arm_joint_1, arm_joint_2;
+			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3;
 			var youbot;
 
 			window.onload = init;
@@ -125,7 +133,7 @@
 				
 				// ground
 				var geometry = new THREE.PlaneGeometry( 20000,20000 );
-				var groundMap = new THREE.ImageUtils.loadTexture("images/ground.jpg");
+				var groundMap = new THREE.ImageUtils.loadTexture( AssetsFolder + "ground.jpg" );
 				groundMap.repeat.set( 2000, 2000 );
 				groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
 				var mat00 = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x909090} );
@@ -158,43 +166,13 @@
 					createRobot();
 					document.getElementById('loading').style.visibility = 'hidden';
 				};
-				loader.load( 'models/youbot.sea' );
+				loader.load( AssetsFolder + "youbot.sea" );
 			}
 
 			function createRobot() {
 				var i;
 				youbot = new THREE.Object3D();
 				scene.add(youbot);
-				// textures
-				var textures = [];
-				textures[0] = new THREE.ImageUtils.loadTexture("images/base.jpg");
-				textures[1] = new THREE.ImageUtils.loadTexture("images/wheel.jpg");
-				textures[2] = new THREE.ImageUtils.loadTexture("images/plate.jpg");
-				textures[3] = new THREE.ImageUtils.loadTexture("images/base_frame.jpg");
-				textures[4] = new THREE.ImageUtils.loadTexture("images/joint1.jpg");
-				textures[5] = new THREE.ImageUtils.loadTexture("images/joint2.jpg");
-
-				for(i = 0; i!== textures.length; i++){
-					textures[i].repeat.set( 1, -1 );
-				    textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
-				    textures[i].anisotropy = renderer.getMaxAnisotropy();
-				}
-
-				// material
-				var shine = 10;
-				var specular = 0x606060;
-				var baseMaterial = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
-				var wheelMaterial = new THREE.MeshPhongMaterial( { map: textures[1], shininess:shine, specular:specular } );
-				var plateMaterial = new THREE.MeshPhongMaterial( { map: textures[2], shininess:shine, specular:specular } );
-				var armBaseMaterial = new THREE.MeshPhongMaterial( { map: textures[3], shininess:shine, specular:specular } );
-				var joint1Material = new THREE.MeshPhongMaterial( { map: textures[4], shininess:shine, specular:specular } );
-				var joint2Material = new THREE.MeshPhongMaterial( { map: textures[5], shininess:shine, specular:specular } );
-				
-				/*var baseMaterial = new THREE.MeshLambertMaterial( { map: textures[0], shininess:100, specular:0x404040 } );
-				var wheelMaterial = new THREE.MeshLambertMaterial( { map: textures[1], shininess:100, specular:0x404040 } );
-				var armBaseMaterial = new THREE.MeshLambertMaterial( { map: textures[2], shininess:100, specular:0x404040 } );
-				var joint1Material = new THREE.MeshLambertMaterial( { map: textures[3], shininess:100, specular:0x404040 } );
-				var plateMaterial = new THREE.MeshLambertMaterial( { map: textures[4], shininess:100, specular:0x404040 } );*/
 
 				// detect mesh
 				var name;
@@ -205,19 +183,51 @@
 				}
 				arm_joint_1 = arm_base.children[0];
 				arm_joint_2 = arm_joint_1.children[0];
+				arm_joint_3 = arm_joint_2.children[0];
+
+				// textures
+				var textures = [];
+				textures[0] = new THREE.ImageUtils.loadTexture( AssetsFolder + "wheel.jpg" );
+				textures[1] = new THREE.ImageUtils.loadTexture( AssetsFolder + "base.jpg" );
+				textures[2] = new THREE.ImageUtils.loadTexture( AssetsFolder + "plate.jpg" );
+				textures[3] = new THREE.ImageUtils.loadTexture( AssetsFolder + "base_frame.jpg" );
+				textures[4] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint1.jpg" );
+				textures[5] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint2.jpg" );
+				textures[6] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint3.jpg" );
+
+				for(i = 0; i!== textures.length; i++){
+					textures[i].repeat.set( 1, -1 );
+				    textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+				    textures[i].anisotropy = renderer.getMaxAnisotropy();
+				}
+
+				// material
+				var materials = [];
+				var shine = 10;
+				var specular = 0x606060;
+				materials[0] = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
+				materials[1] = new THREE.MeshPhongMaterial( { map: textures[1], shininess:shine, specular:specular } );
+				materials[2] = new THREE.MeshPhongMaterial( { map: textures[2], shininess:shine, specular:specular } );
+				materials[3] = new THREE.MeshPhongMaterial( { map: textures[3], shininess:shine, specular:specular } );
+				materials[4] = new THREE.MeshPhongMaterial( { map: textures[4], shininess:shine, specular:specular } );
+				materials[5] = new THREE.MeshPhongMaterial( { map: textures[5], shininess:shine, specular:specular } );
+				materials[6] = new THREE.MeshPhongMaterial( { map: textures[6], shininess:shine, specular:specular } );
 
 				// apply material
-				base.material = baseMaterial;
-				plate.material = plateMaterial;
-				arm_base.material = armBaseMaterial;
-				arm_joint_1.material = joint1Material;
-				arm_joint_2.material = joint2Material;
+				base.material = materials[1];
+				plate.material = materials[2];
+				arm_base.material = materials[3];
+				arm_joint_1.material = materials[4];
+				arm_joint_2.material = materials[5];
+				arm_joint_3.material = materials[6];
 
+				// add root model
 				youbot.add( base );
 
+				// add wheels
 				for(i=0; i!==4;i++){
-					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, wheelMaterial);
-					else wheels[i] = new THREE.Mesh( wheel_geo_l, wheelMaterial);
+					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, materials[0]);
+					else wheels[i] = new THREE.Mesh( wheel_geo_l, materials[0]);
 					
 					if(i===0) wheels[i].position.set(-22.5, 5, -15.8);
 					if(i===1) wheels[i].position.set(-22.5, 5, 15.8);
@@ -390,26 +400,15 @@
 			//  GUI
 			//-----------------------------------------------------
 
-			var jointConfig = {
-				joint_1:0,
-				joint_2:90
-			}
+			var jointConfig = { joint_1:0, joint_2:90, joint_3:90 };
 
 			function addGUI() {
-				//gui = new dat.GUI({autoPlace:false, width:204});
 				gui = new dat.GUI();
-				//document.getElementById('gui').appendChild(gui.domElement);
-				//gui.close();
 				var f0 = gui.addFolder('ARM');
-				//f0.add( viewConfig, 'withEffect' ).onChange( function() {rotation_joint_1();});
 				f0.add( jointConfig, 'joint_1', 0, 360 ).listen().onChange( function() { arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad; });
 				f0.add( jointConfig, 'joint_2', 0, 170 ).listen().onChange( function() { arm_joint_2.rotation.y = jointConfig.joint_2 * ToRad; });
-
-
+				f0.add( jointConfig, 'joint_3', -45, 225 ).listen().onChange( function() { arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad; });
 				f0.open();
-			}
-
-			function rotation_joint_1() {
 			}
 
 		</script>
