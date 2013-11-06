@@ -25,9 +25,9 @@
 				height: 300px;
 				text-align: left;
 				display:block;
-				z-index: 100;
+				pointer-events: none;
 				margin-left:10px;
-			}			
+			}
 			#loading {
 			    position: fixed;
 			    top: 50%;
@@ -37,8 +37,10 @@
 		</style>
 	</head>
 
-	<body>		
+	<body>
+	    <div id="container"></div>	
 		<div id="info"></div>
+		<div id="gui"></div>
 		<div id="loading"><img src="images/ajax-loader.gif" alt="Loading youbot robot"></div>
 
 		<script src="js/three.min.js"></script>	
@@ -48,9 +50,10 @@
 		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
 		<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
 		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src='js/dat.gui.min.js'></script>
 
 		<script>								
-			var container, info;
+			var container, info, gui;
 			var cam, scene, renderer, clock, loader, composer, renderPass, delta, sunLight;
 			var ToRad = Math.PI / 180;
 			// geometry
@@ -62,19 +65,17 @@
 
 			window.onload = init;
 			
-
 			function init() {
-				container = document.createElement( 'div' );
+				container = document.getElementById('container');
 				container.style.position = "absolute";
-				document.body.appendChild( container );
 				
 				clock = new THREE.Clock();
 
 				// Scene
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0x373737 , 200, 1000 );
-				cam = new CameraLoth();
-				camera.aspect = window.innerWidth / (window.innerHeight-4);
+				cam = new CameraLoth(container);
+				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
 				// Lights and shadow
@@ -117,7 +118,7 @@
 				renderer.gammaOutput = true;
 				renderer.gammaInput = true;
 				renderer.setClearColor( 0x373737, 1 );
-				renderer.setSize( window.innerWidth, window.innerHeight-4 );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
 				
 				window.addEventListener( 'resize', onResize, false );
@@ -235,6 +236,7 @@
 				onThreeChangeView(40, 60, 150);
 
 				animate();
+				addGUI();
 			}
 
 			var controls = { rotation: 0, latspeed: 0, speed: 0, vx: 0, vz: 0, tx: 0, tz: 0, maxSpeed: 100, acceleration: 100, deceleration: 1000, angularSpeed: 2, wheelRotation : 6, lateral:false};
@@ -327,9 +329,9 @@
 			//-----------------------------------------------------
 
 			function onResize() {
-				camera.aspect = window.innerWidth / (window.innerHeight-4);
+				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight-4 );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
 
 			function animate() {
@@ -382,6 +384,32 @@
 					case 32:                   key[6]=0; break; // space          
 					case 17: case 67:          key[7]=0; break; // ctrl, C
 				}
+			}
+
+			//-----------------------------------------------------
+			//  GUI
+			//-----------------------------------------------------
+
+			var jointConfig = {
+				joint_1:0,
+				joint_2:90
+			}
+
+			function addGUI() {
+				//gui = new dat.GUI({autoPlace:false, width:204});
+				gui = new dat.GUI();
+				//document.getElementById('gui').appendChild(gui.domElement);
+				//gui.close();
+				var f0 = gui.addFolder('ARM');
+				//f0.add( viewConfig, 'withEffect' ).onChange( function() {rotation_joint_1();});
+				f0.add( jointConfig, 'joint_1', 0, 360 ).listen().onChange( function() { arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad; });
+				f0.add( jointConfig, 'joint_2', 0, 170 ).listen().onChange( function() { arm_joint_2.rotation.y = jointConfig.joint_2 * ToRad; });
+
+
+				f0.open();
+			}
+
+			function rotation_joint_1() {
 			}
 
 		</script>

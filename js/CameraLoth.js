@@ -7,17 +7,18 @@ var ToRad = Math.PI / 180;
 
 var camera;
 
-function CameraLoth(option) {
+function CameraLoth(domElement) {
+	this.domElement = ( domElement !== undefined ) ? domElement : document
 	camera = new THREE.PerspectiveCamera( 60, 1, 1, 1000 );
 	scene.add(camera);
 	moveCamera();
 
-	document.addEventListener( 'mousemove', onMouseMove, false );
-	document.addEventListener( 'touchmove', onTouchMove, false );
-	document.addEventListener( 'mousedown', onMouseDown, false );
-	document.addEventListener( 'mouseup', onMouseUp, false );
-	document.addEventListener( 'mousewheel', onMouseWheel, false );
-	document.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
+	this.domElement.addEventListener( 'mousemove', onMouseMove, false );
+	this.domElement.addEventListener( 'touchmove', onTouchMove, false );
+	this.domElement.addEventListener( 'mousedown', onMouseDown, false );
+	this.domElement.addEventListener( 'mouseup', onMouseUp, false );
+	this.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
+	this.domElement.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
 }
 
 
@@ -25,7 +26,7 @@ function CameraLoth(option) {
 //  MOUSE
 //-----------------------------------------------------
 
-function onMouseOut() {
+/*function onMouseOut() {
 	if(cursor){
 	    document.body.style.cursor = 'auto';
 	    cursorUp.style.visibility = 'hidden';
@@ -40,7 +41,7 @@ function onMouseOver() {
     	cursorUp.style.visibility = 'visible';
     	mouse.over = true;
     }
-}
+}*/
 
 function onMouseDown(e) {
 	mouse.ox = e.clientX;
