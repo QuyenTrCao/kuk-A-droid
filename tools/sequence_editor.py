@@ -61,12 +61,18 @@ def bezier_curve(ps, pe):
     logging.debug('Starting point: %s', ps)
     logging.debug('End point: %s', pe)    
     (i0, p0) = ps
-    (i3, p3) = pe   
+    (i3, p3) = pe
+    p1 = p0
+    p2 = p3
+    bc = []
     for i in range((i0 + 1), i3):
-        print i
         t = norm_it(i0, i3, i)
-        print t
-    return None
+        term0 = (1 - t) * (1 - t) * (1 - t) * p0
+        term1 = 3 * (1 - t) * (1 - t) * t * p1
+        term2 = 3 * (1 - t) * t * t * p2
+        term3 = t * t * t * p3
+        bc.append((i, (term0 + term1 + term2 + term3)))
+    return bc
 
 # TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
@@ -144,6 +150,7 @@ class SequenceEditor(cmd.Cmd):
                     (i, self.keyframes['frames'][i][0]),
                     (j, self.keyframes['frames'][j][0])
                 )
+            print inter_seq
         #for i in range(last_frame + 1):
         #    print('Fr. %i / %i ' % (i, last_frame)),
         #    print('- t. '),
