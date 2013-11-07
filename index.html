@@ -4,73 +4,81 @@
 		<title>Kuk-a-droid</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<meta property="og:title" content="Three Youbot - WebGL"/>
-		<meta property="og:description" content="Robot simulation demo"/>
+		<meta property="og:title" content="Kuk-a-droid - WebGL"/>
+		<meta property="og:description" content="Robot simulation 3D demo"/>
+		<meta name="author" content="Loth 2013" />
 		<meta name="language" content="en-us" />
 		<style>
 			body {
-				font-family: Monospace;
-				font-size:11px;
+				font-family: 'Trebuchet MS', Geneva, sans-serif;
 				background-color: #373737;
-				color: #fff;
-				margin: 0px;
 				overflow: hidden;
+				font-size: 11px;
 				height: 100%;
+				color: #eee;
+				margin: 0px;
 			}
 			#info {
-				color: #fff;
-				position: absolute;
-				top: 10px;
+				top: 5px;
 				width: 300px;
 				height: 300px;
-				text-align: left;
-				display:block;
+				margin-left:20px;
+				position: absolute;
 				pointer-events: none;
-				margin-left:10px;
+			}
+			#copy {
+				color: #888;
+				bottom: 6px;
+				width: 150px;
+				margin-left:20px;
+				position: absolute;
+				pointer-events: none;
 			}
 			#loading {
-			    position: fixed;
 			    top: 50%;
 			    left: 50%;
+			    position: fixed;
 			    pointer-events: none;
 			}
 			.unselectable{
-			    -moz-user-select: none;
+				-o-user-select: none;
 			    -ms-user-select: none;
+			    -moz-user-select: none;
 			    -khtml-user-select: none;
 			    -webkit-user-select: none;
-			    -o-user-select: none;
 			}
 		</style>
 	</head>
 
 	<body>
-	    <div id="container" class="unselectable"></div>	
+	    <div id="container" class="unselectable"></div>
+	    <div id="copy" class="unselectable">Mesh &amp; map by Loth</div>
 		<div id="info" class="unselectable"></div>
 		<div id="gui" class="unselectable"></div>
 		<div id="loading" class="unselectable"><img src="webdemo/assets/ajax-loader.gif" alt="Loading youbot robot"></div>
 
-		<script src="webdemo/js/three.min.js"></script>	
+		<script src="webdemo/js/three.min.js"></script>
+		<script src="webdemo/js/CameraLoth.js"></script>
+		<script src='webdemo/js/dat.gui.min.js'></script>
 		<script src="webdemo/js/tweenLite.min.js"></script>
-		<script src="webdemo/js/CameraLoth.js"></script>	
 		<script src="webdemo/js/loaders/sea3d/SEA3D.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DLoader.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DDeflate.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DLZMA.js"></script>
-		<script src='webdemo/js/dat.gui.min.js'></script>
-
+		
 		<script>
 		    var AssetsFolder = "webdemo/assets/";
+		    var ToRad = Math.PI / 180;
 			var container, info, gui;
-			var cam, scene, renderer, clock, loader, composer, renderPass, delta, sunLight;
-			var ToRad = Math.PI / 180;
+			var scene, renderer, camera, clock, delta, sunLight, cam;
 			// geometry
 			var wheel_geo_r, wheel_geo_l;
+			// object3d
+			var youbot;
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3;
-			var youbot;
-
+			
 			window.onload = init;
 			
 			function init() {
@@ -79,12 +87,13 @@
 				
 				clock = new THREE.Clock();
 
-				// Scene
+				// Scene and camera
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0x373737 , 200, 1000 );
 				cam = new CameraLoth(container);
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
+				camera.scale.set(-1, 1, 1);
 
 				// Lights and shadow
 				var ambient = new THREE.AmbientLight( 0x505050);
@@ -109,7 +118,6 @@
 				sunLight.shadowMapHeight =1024;
 
 				var lightSize = 130;
-
 				sunLight.shadowCameraLeft = -lightSize;
 				sunLight.shadowCameraRight = lightSize;
 				sunLight.shadowCameraTop = lightSize;
@@ -139,43 +147,33 @@
 				var mat00 = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x909090} );
 				var plane = new THREE.Mesh( geometry, mat00 );
 				plane.rotation.x = 90*ToRad;
-				scene.add(plane);
 				plane.receiveShadow = true;
 				plane.castShadow = false;
+				scene.add(plane);
 
-				loadRobot();
-			}
-
-			function loadRobot() {
-				var sea3dStandard = true;
-				//var matBasic = new THREE.MeshPhongMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
-				var matBasic = new THREE.MeshLambertMaterial( { color: 0x333333, shininess:100, specular:0xffffff } );
-
-				if (sea3dStandard)
-					camera.scale.set(-1, 1, 1);
-				
-				loader = new THREE.SEA3D( sea3dStandard );	
+				// load sea3d model
+				var loader = new THREE.SEA3D( true );	
 				
 				loader.onComplete = function( e ) {
 					for (var i=0; i !== loader.meshes.length; i++){
-						loader.meshes[i].material = matBasic;
+						//loader.meshes[i].material = matBasic;
 						if(loader.meshes[i].name === "base_frame" ) base = loader.meshes[i];
 						if(loader.meshes[i].name === "bot_wheel_R" ) wheel_geo_r = loader.meshes[i].geometry;
 						if(loader.meshes[i].name === "bot_wheel_L" ) wheel_geo_l = loader.meshes[i].geometry;
 					}
-					createRobot();
 					document.getElementById('loading').style.visibility = 'hidden';
+					createRobot();
 				};
 				loader.load( AssetsFolder + "youbot.sea" );
 			}
 
 			function createRobot() {
-				var i;
+				// object3d
 				youbot = new THREE.Object3D();
 				scene.add(youbot);
 
 				// detect mesh
-				var name;
+				var i, name;
 				for(i = 0; i!== base.children.length; i++){
 					name = base.children[i].name;
 					if(name === "arm_base_frame") arm_base = base.children[i]
@@ -185,7 +183,7 @@
 				arm_joint_2 = arm_joint_1.children[0];
 				arm_joint_3 = arm_joint_2.children[0];
 
-				// textures
+				// texture
 				var textures = [];
 				textures[0] = new THREE.ImageUtils.loadTexture( AssetsFolder + "wheel.jpg" );
 				textures[1] = new THREE.ImageUtils.loadTexture( AssetsFolder + "base.jpg" );
@@ -225,7 +223,7 @@
 				youbot.add( base );
 
 				// add wheels
-				for(i=0; i!==4;i++){
+				for(i=0; i!==4; i++){
 					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, materials[0]);
 					else wheels[i] = new THREE.Mesh( wheel_geo_l, materials[0]);
 					
@@ -357,7 +355,7 @@
 			}
 
 			function displayInfo() {
-				info = "YOUBOT 0.1 alpha<br><br>";
+				info = "<h2>Kuk-a-droid</h2>";
 				info += "<i>WSAD, ZSQD or Arrow key to move</i><br>";
 				info += "<i>press CTRL for lateral mouvement</i><br><br>";
 				info += "Position x:"+ youbot.position.x.toFixed(2) + " y:" + youbot.position.z.toFixed(2);
