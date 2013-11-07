@@ -189,7 +189,7 @@ class SequenceEditor(cmd.Cmd):
         xnp = np.array(x)
         ynp = np.array(y)
         plt.plot(xnp, ynp)
-        plt.show()
+        plt.show(block=False)
         is_frame0(self.keyframes)
         
     def do_EOF(self, line):
