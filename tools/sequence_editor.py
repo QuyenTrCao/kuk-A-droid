@@ -51,6 +51,23 @@ def parse_kframe_add(line):
     # TODO: add some checks here
     return int(line)
 
+def norm_it(i_start, i_end, i):
+    '''Normalize iteration value'''
+    return (i - i_start) / float(i_end - i_start)
+    
+def bezier_curve(ps, pe):
+    '''Return the interpolated value using a cubic Bezier curve'''
+    logging.debug('Call function bezier_curve()')      
+    logging.debug('Starting point: %s', ps)
+    logging.debug('End point: %s', pe)    
+    (i0, p0) = ps
+    (i3, p3) = pe   
+    for i in range((i0 + 1), i3):
+        print i
+        t = norm_it(i0, i3, i)
+        print t
+    return None
+
 # TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
 
@@ -123,7 +140,10 @@ class SequenceEditor(cmd.Cmd):
         logging.debug('Last frame number %i:', last_frame)
         for (i, j) in zip(self.keyframes['frames'].keys()[:-1],
                 self.keyframes['frames'].keys()[1:]):
-            print i, j
+            inter_seq = bezier_curve(
+                    (i, self.keyframes['frames'][i][0]),
+                    (j, self.keyframes['frames'][j][0])
+                )
         #for i in range(last_frame + 1):
         #    print('Fr. %i / %i ' % (i, last_frame)),
         #    print('- t. '),
