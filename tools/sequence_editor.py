@@ -10,8 +10,10 @@ Its purpose is to edit motion sequence (create/modify/save) and export
 a sequence script from call by the motor skills.
 '''
 
-import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 import cmd
+import pickle
 import logging
 import argparse
 
@@ -165,8 +167,10 @@ class SequenceEditor(cmd.Cmd):
         print inter_pos
         iframes = trans_it(inter_pos)
         print iframes        
-
+        x = []
+        y = []
         for i in range(last_frame + 1):
+            x.append(i)
             print('Fr. %i / %i ' % (i, last_frame)),
             print('- t. '),
             print('- ty. '),
@@ -174,11 +178,18 @@ class SequenceEditor(cmd.Cmd):
                 print "K",
                 print ' - pose ',
                 print self.keyframes['frames'][i]
+                y.append(self.keyframes['frames'][i][0])
             if i in iframes['frames']:
                 print "I",
                 print ' - pose ',
                 print iframes['frames'][i]
+                y.append(iframes['frames'][i][0])
 
+        # very quick and very dirty
+        xnp = np.array(x)
+        ynp = np.array(y)
+        plt.plot(xnp, ynp)
+        plt.show()
         is_frame0(self.keyframes)
         
     def do_EOF(self, line):
