@@ -256,12 +256,12 @@
 				if ( key[0] ) controls.speed = clamp( controls.speed + delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 				if ( key[1] ) controls.speed = clamp( controls.speed - delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 				if ( key[2] ){ 
-					if(!controls.lateral)controls.rotation += delta * controls.angularSpeed;
-					else controls.latspeed = clamp( controls.latspeed + delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+					if(!controls.lateral)controls.rotation -= delta * controls.angularSpeed;
+					else controls.latspeed = clamp( controls.latspeed - delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 				}
 				if ( key[3] ){
-				    if(!controls.lateral)controls.rotation -= delta * controls.angularSpeed;
-					else controls.latspeed = clamp( controls.latspeed - delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+				    if(!controls.lateral)controls.rotation += delta * controls.angularSpeed;
+					else controls.latspeed = clamp( controls.latspeed + delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 				}
 				//if ( key[3] || key[2]) controls.speed = clamp( controls.speed + 1 * delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
 
@@ -278,11 +278,11 @@
 			
 				if ( ! ( key[2] || key[3]) ) {
 					if ( controls.latspeed > 0 ) {
-						var k = exponentialEaseOut( controls.latspeed / controls.maxSpeed );
-						controls.latspeed = clamp( controls.latspeed - k * delta * controls.deceleration, 0, controls.maxSpeed );
+						var k = exponentialEaseOut( controls.latspeed / -controls.maxSpeed );
+						controls.latspeed = clamp( controls.latspeed + k * delta * controls.deceleration, 0, controls.maxSpeed );
 					} else {
-						var k = exponentialEaseOut( controls.latspeed / (-controls.maxSpeed) );
-						controls.latspeed = clamp( controls.latspeed + k * delta * controls.deceleration, -controls.maxSpeed, 0 );
+						var k = exponentialEaseOut( controls.latspeed / (controls.maxSpeed) );
+						controls.latspeed = clamp( controls.latspeed - k * delta * controls.deceleration, -controls.maxSpeed, 0 );
 					}
 				}
 
@@ -307,7 +307,7 @@
 				for(var i=0; i!==4;i++){
 					if (key[0]) wheels[i].rotation.z -= wSpeed;
 					else if (key[1]) wheels[i].rotation.z += wSpeed;
-					else if (key[2]){
+					else if (key[3]){
 						if(!controls.lateral){
 							if(i==0 || i==3) wheels[i].rotation.z += wSpeed;
 							else wheels[i].rotation.z -= wSpeed;
@@ -315,7 +315,7 @@
 					    	if(i==1 || i==3) wheels[i].rotation.z += wSpeed;
 							else wheels[i].rotation.z -= wSpeed;
 					    }
-					} else if (key[3]){
+					} else if (key[2]){
 						if(!controls.lateral){
 							if(i==0 || i==3) wheels[i].rotation.z -= wSpeed;
 							else wheels[i].rotation.z += wSpeed;
