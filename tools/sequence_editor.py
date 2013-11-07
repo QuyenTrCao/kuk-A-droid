@@ -74,6 +74,17 @@ def bezier_curve(ps, pe):
         bc.append((i, (term0 + term1 + term2 + term3)))
     return bc
 
+def trans_it(pos_values):
+    '''Format pos values into frames dict'''
+    iframes = {'frequency': DEF_FREQ, 'frames': {}}
+    # TODO: should use the frequency from the parameters    
+    for pos_value in pos_values:
+        (i, p) = pos_value
+        vals = []
+        vals.append(p)
+        iframes['frames'][i] = vals
+    return iframes
+    
 # TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
 
@@ -144,25 +155,30 @@ class SequenceEditor(cmd.Cmd):
             return
         last_frame = max(self.keyframes['frames'])
         logging.debug('Last frame number %i:', last_frame)
+        inter_pos = []
         for (i, j) in zip(self.keyframes['frames'].keys()[:-1],
                 self.keyframes['frames'].keys()[1:]):
-            inter_seq = bezier_curve(
-                    (i, self.keyframes['frames'][i][0]),
-                    (j, self.keyframes['frames'][j][0])
-                )
-            print inter_seq
-        #for i in range(last_frame + 1):
-        #    print('Fr. %i / %i ' % (i, last_frame)),
-        #    print('- t. '),
-        #    print('- ty. '),
-        #    if i in self.keyframes['frames']:
-        #        print "K",
-        #        print ' - pose ',
-        #        print self.keyframes['frames'][i]
-        #    else:
-        #        print "I",
-        #        print ' - pose ',
-        #        # i_pose = i_bezier(p_start, p_end)
+            inter_pos = inter_pos + bezier_curve(
+                        (i, self.keyframes['frames'][i][0]),
+                        (j, self.keyframes['frames'][j][0])
+                    )
+        print inter_pos
+        iframes = trans_it(inter_pos)
+        print iframes        
+
+        for i in range(last_frame + 1):
+            print('Fr. %i / %i ' % (i, last_frame)),
+            print('- t. '),
+            print('- ty. '),
+            if i in self.keyframes['frames']:
+                print "K",
+                print ' - pose ',
+                print self.keyframes['frames'][i]
+            if i in iframes['frames']:
+                print "I",
+                print ' - pose ',
+                print iframes['frames'][i]
+
         is_frame0(self.keyframes)
         
     def do_EOF(self, line):
