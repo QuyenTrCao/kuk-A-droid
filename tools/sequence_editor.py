@@ -45,6 +45,20 @@ def get_fnums(kf):
     fnums = [fnum for (fnum, j_poses) in kf]
     logging.debug('Frames numbers: %s', fnums)   
     return fnums
+
+def get_j_poses(kf):
+    '''Return an array with the arrays poses'''     
+    logging.debug('Call function get_j_poses()')
+    j_poses = [j_poses for (fnum, j_poses) in kf]
+    return j_poses    
+ 
+def get_coord(frame):
+    '''Return point coordinates from frames'''
+    logging.debug('Call function get_coord()')
+    (x, poses) = frame
+    y = poses[0]
+    # TODO: adapt for several joints
+    return (x, y)
     
 def sort_kframes(kf):
     '''Sort the keyframes in place'''
@@ -70,30 +84,41 @@ def parse_kframe_add(line):
 
 def get_seq(kf):
     '''Generate the full sequence'''
+    # Step 1: create the kf np arrays
+    kfi = np.array(get_fnums(kf))
+    kfp = np.array(get_j_poses(kf))
+    
+    # Step2: create the if np arrays
+    for (kfs, kfe) in zip(kf[:-1], kf[1:]):
+        p0 = (x0, y0) = get_coord(kfs)
+        p3 = (x3, y3) = get_coord(kfe)
+        p1 = (x1, y1) = (((x3 - x0) * 0.25 + x0), y0)
+        p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
+        (ifi, ifp) = bezier_curve(p0, p1, p2, p3)  
     return None, None, None
     
 def norm_it(i_start, i_end, i):
     '''Normalize iteration value'''
     return (i - i_start) / float(i_end - i_start)
     
-def bezier_curve(ps, pe):
+def bezier_curve(p0, p1, p2, p3):
     '''Return the interpolated value using a cubic Bezier curve'''
     logging.debug('Call function bezier_curve()')      
-    logging.debug('Starting point: %s', ps)
-    logging.debug('End point: %s', pe)    
-    (i0, p0) = ps
-    (i3, p3) = pe
-    p1 = p0
-    p2 = p3
-    bc = []
-    for i in range((i0 + 1), i3):
-        t = norm_it(i0, i3, i)
-        term0 = (1 - t) * (1 - t) * (1 - t) * p0
-        term1 = 3 * (1 - t) * (1 - t) * t * p1
-        term2 = 3 * (1 - t) * t * t * p2
-        term3 = t * t * t * p3
-        bc.append((i, (term0 + term1 + term2 + term3)))
-    return bc
+    logging.debug('Parameters: %s, %s, %s, %s', p0, p1, p2, p3)
+    t = np.linspace(0, 1, 100)
+    # TODO: define the best linspace step
+    term0 = (1 - t) * (1 - t) * (1 - t) * npp0
+    print term0
+#    term0 = (1 - t) * (1 - t) * (1 - t) * p0
+    
+#    for i in range((i0 + 1), i3):
+#        t = norm_it(i0, i3, i)
+#        term0 = 
+#        term1 = 3 * (1 - t) * (1 - t) * t * p1
+#        term2 = 3 * (1 - t) * t * t * p2
+#        term3 = t * t * t * p3
+#        bc.append((i, (term0 + term1 + term2 + term3)))
+    return None, None
 
 def trans_it(pos_values):
     '''Format pos values into frames dict'''
@@ -184,42 +209,42 @@ class SequenceEditor(cmd.Cmd):
         (sfi, sfp, sft) = get_seq(self.kf)
         print sfi, sfp, sft
         
-        last_frame = max(self.keyframes['frames'])
-        logging.debug('Last frame number %i:', last_frame)
-        inter_pos = []
-        for (i, j) in zip(self.keyframes['frames'].keys()[:-1],
-                self.keyframes['frames'].keys()[1:]):
-            inter_pos = inter_pos + bezier_curve(
-                        (i, self.keyframes['frames'][i][0]),
-                        (j, self.keyframes['frames'][j][0])
-                    )
-        print inter_pos
-        iframes = trans_it(inter_pos)
-        print iframes        
-        x = []
-        y = []
-        for i in range(last_frame + 1):
-            x.append(i)
-            print('Fr. %i / %i ' % (i, last_frame)),
-            print('- t. '),
-            print('- ty. '),
-            if i in self.keyframes['frames']:
-                print "K",
-                print ' - pose ',
-                print self.keyframes['frames'][i]
-                y.append(self.keyframes['frames'][i][0])
-            if i in iframes['frames']:
-                print "I",
-                print ' - pose ',
-                print iframes['frames'][i]
-                y.append(iframes['frames'][i][0])
-
-        # very quick and very dirty
-        xnp = np.array(x)
-        ynp = np.array(y)
-        plt.plot(xnp, ynp)
-        plt.show(block=False)
-        is_frame0(self.keyframes)
+#        last_frame = max(self.keyframes['frames'])
+#        logging.debug('Last frame number %i:', last_frame)
+#        inter_pos = []
+#        for (i, j) in zip(self.keyframes['frames'].keys()[:-1],
+#                self.keyframes['frames'].keys()[1:]):
+#            inter_pos = inter_pos + bezier_curve(
+#                        (i, self.keyframes['frames'][i][0]),
+#                        (j, self.keyframes['frames'][j][0])
+#                    )
+#        print inter_pos
+#        iframes = trans_it(inter_pos)
+#        print iframes        
+#        x = []
+#        y = []
+#        for i in range(last_frame + 1):
+#            x.append(i)
+#            print('Fr. %i / %i ' % (i, last_frame)),
+#            print('- t. '),
+#            print('- ty. '),
+#            if i in self.keyframes['frames']:
+#                print "K",
+#                print ' - pose ',
+#                print self.keyframes['frames'][i]
+#                y.append(self.keyframes['frames'][i][0])
+#            if i in iframes['frames']:
+#                print "I",
+#                print ' - pose ',
+#                print iframes['frames'][i]
+#                y.append(iframes['frames'][i][0])
+#
+#        # very quick and very dirty
+#        xnp = np.array(x)
+#        ynp = np.array(y)
+#        plt.plot(xnp, ynp)
+#        plt.show(block=False)
+#        is_frame0(self.keyframes)
         
     def do_EOF(self, line):
         '''Override end of file'''
