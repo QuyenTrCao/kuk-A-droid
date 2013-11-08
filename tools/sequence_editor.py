@@ -23,7 +23,7 @@ DEF_NB_JOINTS = 1
 DEF_FNAME = 'keyframes.txt'
 
 def get_parameters():
-    ''' Manage the execution parameters'''        
+    '''Manage the execution parameters'''        
     # get input parameters
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -39,10 +39,25 @@ def get_parameters():
         logging.basicConfig(level=logging.DEBUG)
     logging.info('Sequence editor started in maximum verbosity mode')
 
+def get_fnums(kf):
+    '''Return an array with the keyframes numbers'''  
+    logging.debug('Call function get_fnums()')
+    fnums = [fnum for (fnum, j_poses) in kf]
+    logging.debug('Frames numbers: %s', fnums)   
+    return fnums
+    
+def sort_kframes(kf):
+    '''Sort the keyframes in place'''
+    logging.debug('Call function sort_kframes()')
+    logging.debug('Before: %s', kf)
+    kf.sort(key=lambda (fnum, j_poses): fnum)    
+    logging.debug('After: %s', kf)   
+
 def is_frame0(kf):
     '''Check if the frame 0 has been defined'''
     logging.debug('Call function is_frame0()')
-    if not 0 in kf['frames']:
+    fnums = get_fnums(kf)     
+    if not 0 in fnums:
         logging.warning('Frame0 not defined')
     else:
         logging.debug('Frame0 is defined')
@@ -50,9 +65,13 @@ def is_frame0(kf):
 def parse_kframe_add(line):
     '''Parse the input for the add keyframe function'''
     logging.debug('Call function parse_kframe_add()')   
-    # TODO: add some checks here
+    # TODO: add some checks here (no value for example or existing frame)
     return int(line)
 
+def get_seq(kf):
+    '''Generate the full sequence'''
+    return None, None, None
+    
 def norm_it(i_start, i_end, i):
     '''Normalize iteration value'''
     return (i - i_start) / float(i_end - i_start)
@@ -96,65 +115,75 @@ class SequenceEditor(cmd.Cmd):
         '''Override and used for class variable'''
         logging.debug('Call function preloop()')
         # initialize variables
-        self.frequency = DEF_FREQ
+        self.freq = DEF_FREQ
         self.nb_joints = DEF_NB_JOINTS
         self.fname = DEF_FNAME
-        self.keyframes = {'frequency': self.frequency, 'frames': {}}
+        # self.keyframes = {'frequency': self.frequency, 'frames': {}}
+        self.kf = []        
         print("'Crtl+D' or EOF to quit")
-        is_frame0(self.keyframes)
+        is_frame0(self.kf)
         
     def do_param_disp(self, line):
         '''Display a list of the current parameters'''
         logging.debug('Call function do_param_disp()')
-        print('Frequency: %i' % self.frequency)
+        print('Frequency: %i' % self.freq)
         print('Number of joint(s): %i' % self.nb_joints)
         print('File name: %s' % self.fname)
-        is_frame0(self.keyframes)
+        is_frame0(self.kf)
 
     def do_kframe_disp(self, line):
         '''Insert a new keyframe'''
         logging.debug('Call function do_kframe_disp()')
-        print self.keyframes
-        is_frame0(self.keyframes)
+        print self.kf
+        is_frame0(self.kf)
         
     def do_kframe_add(self, line):
         '''Insert a new keyframe'''
         logging.debug('Call function do_kframe_add()')
-        frame_nb  = parse_kframe_add(line)
-        vals = []
+        fnum  = parse_kframe_add(line)
+        j_poses = []
         for i in range(self.nb_joints):
-            val = float(input(
+            j_pose = float(input(
                     'Enter value for joint %i / %i: '  %
                     ((i + 1), self.nb_joints)
                 ))
-            vals.append(val)
-        self.keyframes['frames'][frame_nb] = vals
-        is_frame0(self.keyframes)
+            j_poses.append(j_pose)
+        kf_new = (fnum, j_poses)
+        self.kf.append(kf_new)
+        sort_kframes(self.kf)
+        is_frame0(self.kf)
 
     def do_kframe_save(self, line):
         '''Save the current key frames'''
+        # TODO: store parameters in the dump
         logging.debug('Call function do_kframe_save()')
         f = open(self.fname, 'w')
-        pickle.dump(self.keyframes, f)
+        pickle.dump(self.kf, f)
         f.close()
-        is_frame0(self.keyframes)
+        is_frame0(self.kf)
         
     def do_kframe_open(self, line):
         '''Open a key frames file'''
+        # TODO: load parameter from the dump (see above)
         logging.debug('Call function do_kframe_open()')
         f = open(self.fname, 'r')
-        self.keyframes = pickle.load(f) 
+        self.kf = pickle.load(f) 
         f.close()
-        logging.debug('Key frames loaded: %s', self.keyframes)
-        print('Run kframe_disp to check the content')
-        is_frame0(self.keyframes)
+        sort_kframes(self.kf)
+        logging.debug('Key frames loaded: %s', self.kf)
+        print('Use kframe_disp to check the content')
+        is_frame0(self.kf)
                 
     def do_seq_disp(self, line):
         '''Display the sequence of motion with interpolation'''
         logging.debug('Call function seq_disp()')
-        if len(self.keyframes['frames']) < 2:
-            logging.info('At least 2 keyframes required')
+        fnums = get_fnums(self.kf)
+        if len(fnums) < 2:
+            logging.warning('Not enough keyframes, at least two required')
             return
+        (sfi, sfp, sft) = get_seq(self.kf)
+        print sfi, sfp, sft
+        
         last_frame = max(self.keyframes['frames'])
         logging.debug('Last frame number %i:', last_frame)
         inter_pos = []
