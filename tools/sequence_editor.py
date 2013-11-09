@@ -12,8 +12,9 @@ a sequence script from call by the motor skills.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import cmd
+import json
 import pickle
+import cmd
 import logging
 import argparse
 
@@ -187,6 +188,7 @@ class SequenceEditor(cmd.Cmd):
         self.freq = DEF_FREQ
         self.nb_joints = DEF_NB_JOINTS
         self.fname = DEF_FNAME
+        self.jnames = ['grip1']
         # self.keyframes = {'frequency': self.frequency, 'frames': {}}
         self.kf = []        
         print("'Crtl+D' or EOF to quit")
@@ -254,13 +256,25 @@ class SequenceEditor(cmd.Cmd):
         # TODO: improve display
 
     def do_seq_plot(self, line):
-        '''Plot the full sequence included the interpolated frames'''
+        '''Plot the full sequence including the interpolated frames'''
         logging.debug('Call function seq_plot()')
         if not can_gen_seq(self.kf): return
         (sfi, sfp, sft) = get_seq(self.kf)
         plt.plot(sfi, sfp)
         plt.show(block=False)
         
+    def do_seq_export(self, line):
+        '''Export the full sequence including the interpolated frames'''
+        logging.debug('Call function seq_export()')
+        if not can_gen_seq(self.kf): return
+        (sfi, sfp, sft) = get_seq(self.kf)
+        export = {self.jnames[0]: {} } 
+        for fi in sfi:
+            export[self.jnames[0]][int(fi)] = round(sfp[fi],3)
+        f = open('sequence.txt', 'w')
+        f.write(json.dumps(export))
+        f.close()
+
     def do_EOF(self, line):
         '''Override end of file'''
         logging.debug('Call function do_EOF()')
