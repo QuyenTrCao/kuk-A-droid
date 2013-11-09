@@ -82,6 +82,16 @@ def parse_kframe_add(line):
     # TODO: add some checks here (no value for example or existing frame)
     return int(line)
 
+def can_gen_seq(kf):
+    '''Check if the sequence can be generated'''
+    logging.debug('Call function can_gen_seq()')
+    fnums = get_fnums(kf)
+    if len(fnums) < 2:
+        logging.warning('Not enough keyframes, at least two required')
+        return False
+    else:
+        return True
+
 def get_seq(kf):
     '''Generate the full sequence'''
     # Step 1: create the kf np arrays
@@ -236,10 +246,7 @@ class SequenceEditor(cmd.Cmd):
     def do_seq_disp(self, line):
         '''Display the sequence of motion with interpolation'''
         logging.debug('Call function seq_disp()')
-        fnums = get_fnums(self.kf)
-        if len(fnums) < 2:
-            logging.warning('Not enough keyframes, at least two required')
-            return
+        if not can_gen_seq(self.kf): return
         (sfi, sfp, sft) = get_seq(self.kf)
         print sfi
         print sfp
@@ -249,13 +256,10 @@ class SequenceEditor(cmd.Cmd):
     def do_seq_plot(self, line):
         '''Plot the full sequence included the interpolated frames'''
         logging.debug('Call function seq_plot()')
-        
-#        # very quick and very dirty
-#        xnp = np.array(x)
-#        ynp = np.array(y)
-#        plt.plot(xnp, ynp)
-#        plt.show(block=False)
-#        is_frame0(self.keyframes)
+        if not can_gen_seq(self.kf): return
+        (sfi, sfp, sft) = get_seq(self.kf)
+        plt.plot(sfi, sfp)
+        plt.show(block=False)
         
     def do_EOF(self, line):
         '''Override end of file'''
