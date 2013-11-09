@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bi/env python
 #
 # Copyright 2013 Arn-O. See the LICENSE file at the top-level directory of this
 # distribution and at
@@ -87,38 +87,72 @@ def get_seq(kf):
     # Step 1: create the kf np arrays
     kfi = np.array(get_fnums(kf))
     kfp = np.array(get_j_poses(kf))
-    
+    logging.debug('Keyframes array i: %s', kfi)
+    logging.debug('Keyframes array p: %s', kfp)
     # Step2: create the if np arrays
+    ifi = np.array([])
+    ifp = np.array([])
     for (kfs, kfe) in zip(kf[:-1], kf[1:]):
         p0 = (x0, y0) = get_coord(kfs)
         p3 = (x3, y3) = get_coord(kfe)
         p1 = (x1, y1) = (((x3 - x0) * 0.25 + x0), y0)
         p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
-        (ifi, ifp) = bezier_curve(p0, p1, p2, p3)  
-    return None, None, None
-    
-def norm_it(i_start, i_end, i):
-    '''Normalize iteration value'''
-    return (i - i_start) / float(i_end - i_start)
+        (bfi, bfp) = bezier_curve(p0, p1, p2, p3) 
+        ifi = np.append(ifi, bfi)
+        ifp = np.append(ifp, bfp)
+    logging.debug('Interpolated frames array i: %s', ifi)
+    logging.debug('Interpolated frames array p: %s', ifp)
+    # Step3: merge key frames and interpolated frames
+    sfi = np.array([])
+    sfp = np.array([])
+    sft = np.array([])
+    for i in range(0, (np.amax(kfi) + 1)):
+        sfi = np.append(sfi, i)
+        if i in kfi:
+            sfp = np.append(sfp, kfp[np.where(kfi==i)])
+            sft = np.append(sft, 'k')
+        if i in ifi:
+            sfp = np.append(sfp, ifp[np.where(ifi==i)])
+            sft = np.append(sft, 'i')
+    logging.debug('Sequence frames array i: %s', sfi)
+    logging.debug('Sequence frames array p: %s', sfp)
+    logging.debug('Sequence frames array t: %s', sft)
+    return sfi, sfp, sft
     
 def bezier_curve(p0, p1, p2, p3):
     '''Return the interpolated value using a cubic Bezier curve'''
     logging.debug('Call function bezier_curve()')      
+    # Get each coordinates individually
     logging.debug('Parameters: %s, %s, %s, %s', p0, p1, p2, p3)
-    t = np.linspace(0, 1, 100)
+    (x0, y0) = p0
+    (x1, y1) = p1
+    (x2, y2) = p2
+    (x3, y3) = p3
+    # calculate terms of the interpolation
+    t = np.linspace(0, 1, 1000)
     # TODO: define the best linspace step
-    term0 = (1 - t) * (1 - t) * (1 - t) * npp0
-    print term0
-#    term0 = (1 - t) * (1 - t) * (1 - t) * p0
-    
-#    for i in range((i0 + 1), i3):
-#        t = norm_it(i0, i3, i)
-#        term0 = 
-#        term1 = 3 * (1 - t) * (1 - t) * t * p1
-#        term2 = 3 * (1 - t) * t * t * p2
-#        term3 = t * t * t * p3
-#        bc.append((i, (term0 + term1 + term2 + term3)))
-    return None, None
+    # Check if this could be done directly on the tuples
+    # Not a big deal, since it should be converted to array anyway
+    xterm0 = (1 - t) * (1 - t) * (1 - t) * x0
+    yterm0 = (1 - t) * (1 - t) * (1 - t) * y0
+    xterm1 = 3 * (1 - t) * (1 - t) * t * x1
+    yterm1 = 3 * (1 - t) * (1 - t) * t * y1
+    xterm2 = 3 * (1 - t) * t * t * x2
+    yterm2 = 3 * (1 - t) * t * t * y2
+    xterm3 = t * t * t * x3
+    yterm3 = t * t * t * y3
+    xterm = xterm0 + xterm1 + xterm2 + xterm3
+    yterm = yterm0 + yterm1 + yterm2 + yterm3
+    # generate the return arrays
+    bzi = np.array([])
+    bzp = np.array([])
+    for i in range((x0 + 1), x3):
+        rank = (np.abs(xterm - i)).argmin()
+        bzi = np.append(bzi, i)
+        bzp = np.append(bzp, yterm[rank])
+    logging.debug('Bezier curve i: %s', bzi)
+    logging.debug('Bezier curve p: %s', bzp)
+    return bzi, bzp
 
 def trans_it(pos_values):
     '''Format pos values into frames dict'''
@@ -207,38 +241,15 @@ class SequenceEditor(cmd.Cmd):
             logging.warning('Not enough keyframes, at least two required')
             return
         (sfi, sfp, sft) = get_seq(self.kf)
-        print sfi, sfp, sft
+        print sfi
+        print sfp
+        print sft
+        # TODO: improve display
+
+    def do_seq_plot(self, line):
+        '''Plot the full sequence included the interpolated frames'''
+        logging.debug('Call function seq_plot()')
         
-#        last_frame = max(self.keyframes['frames'])
-#        logging.debug('Last frame number %i:', last_frame)
-#        inter_pos = []
-#        for (i, j) in zip(self.keyframes['frames'].keys()[:-1],
-#                self.keyframes['frames'].keys()[1:]):
-#            inter_pos = inter_pos + bezier_curve(
-#                        (i, self.keyframes['frames'][i][0]),
-#                        (j, self.keyframes['frames'][j][0])
-#                    )
-#        print inter_pos
-#        iframes = trans_it(inter_pos)
-#        print iframes        
-#        x = []
-#        y = []
-#        for i in range(last_frame + 1):
-#            x.append(i)
-#            print('Fr. %i / %i ' % (i, last_frame)),
-#            print('- t. '),
-#            print('- ty. '),
-#            if i in self.keyframes['frames']:
-#                print "K",
-#                print ' - pose ',
-#                print self.keyframes['frames'][i]
-#                y.append(self.keyframes['frames'][i][0])
-#            if i in iframes['frames']:
-#                print "I",
-#                print ' - pose ',
-#                print iframes['frames'][i]
-#                y.append(iframes['frames'][i][0])
-#
 #        # very quick and very dirty
 #        xnp = np.array(x)
 #        ynp = np.array(y)
