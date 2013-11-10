@@ -1,4 +1,4 @@
-#!/usr/bi/env python
+#!/usr/bin/env python
 #
 # Copyright 2013 Arn-O. See the LICENSE file at the top-level directory of this
 # distribution and at
@@ -6,8 +6,9 @@
 
 '''
 This program is a component of the kuk-A-droid project.
-Its purpose is to edit motion sequence (create/modify/save) and export
-a sequence script from call by the motor skills.
+Its purpose is to edit motion sequence (create/modify/save) based on key frames
+and interpolation points. An export can be generated and used by the motor
+skills.
 '''
 
 import numpy as np
@@ -21,7 +22,8 @@ import argparse
 # global constants
 DEF_FREQ = 60
 DEF_NB_JOINTS = 1
-DEF_FNAME = 'keyframes.txt'
+DEF_WNAME = 'new_work'
+
 
 def get_parameters():
     '''Manage the execution parameters'''        
@@ -34,7 +36,6 @@ def get_parameters():
             help='maximum output verbosity'
         )
     args = parser.parse_args()
-    
     # manage verbosity level
     if args.verbosity:
         logging.basicConfig(level=logging.DEBUG)
@@ -43,15 +44,15 @@ def get_parameters():
 def get_fnums(kf):
     '''Return an array with the keyframes numbers'''  
     logging.debug('Call function get_fnums()')
-    fnums = [fnum for (fnum, j_poses) in kf]
+    fnums = [fnum for (fnum, jposes) in kf]
     logging.debug('Frames numbers: %s', fnums)   
     return fnums
 
-def get_j_poses(kf):
-    '''Return an array with the arrays poses'''     
-    logging.debug('Call function get_j_poses()')
-    j_poses = [j_poses for (fnum, j_poses) in kf]
-    return j_poses    
+#def get_jposes(kf):
+#    '''Return an array with the arrays poses'''     
+#    logging.debug('Call function get_jposes()')
+#    jposes = [jposes for (fnum, jposes) in kf]
+#    return jposes    
  
 def get_coord(frame):
     '''Return point coordinates from frames'''
@@ -65,7 +66,7 @@ def sort_kframes(kf):
     '''Sort the keyframes in place'''
     logging.debug('Call function sort_kframes()')
     logging.debug('Before: %s', kf)
-    kf.sort(key=lambda (fnum, j_poses): fnum)    
+    kf.sort(key=lambda (fnum, jposes): fnum)    
     logging.debug('After: %s', kf)   
 
 def is_frame0(kf):
@@ -73,15 +74,60 @@ def is_frame0(kf):
     logging.debug('Call function is_frame0()')
     fnums = get_fnums(kf)     
     if not 0 in fnums:
-        logging.warning('Frame0 not defined')
+        logging.warning('Frame0 not defined, you should create one')
     else:
         logging.debug('Frame0 is defined')
 
+# parse functions
 def parse_kframe_add(line):
     '''Parse the input for the add keyframe function'''
     logging.debug('Call function parse_kframe_add()')   
     # TODO: add some checks here (no value for example or existing frame)
     return int(line)
+
+def parse_kframe_open(line):
+    '''Parse the open function'''
+    logging.debug('Call function parse_kframe_open()')
+    args = str.split(line)
+    # TODO: add file checks
+    fname = args [0] + '_kf.txt'
+    return fname
+
+def parse_param_set(line):
+    '''Parse the input for the set parameter function'''
+    logging.debug('Call function parse_param_set()')
+    args = str.split(line)
+    if args[0] in SET_PARAM_FCTS:
+        fct = SET_PARAM_FCTS[args[0]]
+        val = args[1]
+        return (fct, val)
+    else:
+        logging.warning('Parameter not found')
+        print('Unknown parameter: %s' % args[0])
+        print('Available parameters: %s ' % SET_PARAM_FCTS.keys())
+        return None, None
+
+# set parameters functions
+def set_nb_joints(obj, val):
+    '''Set number of joints'''
+    logging.debug('Call function set_nb_joints()')
+    obj.param['nb_joints'] = int(val)
+
+def set_freq(obj, val):
+    '''Set the frequency'''
+    logging.debug('Call function set_freq()')
+    obj.param['freq'] = int(val) 
+
+def set_work_name(obj, val):
+    '''Set the work name'''
+    logging.debug('Call function set_work_name()')
+    obj.param['wname'] = val 
+
+SET_PARAM_FCTS = {
+        'nb_joints': set_nb_joints,
+        'freq': set_freq,
+        'work_name': set_work_name
+    }
 
 def can_gen_seq(kf):
     '''Check if the sequence can be generated'''
@@ -92,12 +138,47 @@ def can_gen_seq(kf):
         return False
     else:
         return True
+    
+def bezier_curve(p0, p1, p2, p3):
+    '''Return the interpolated values using a cubic Bezier curve'''
+    logging.debug('Call function bezier_curve()')      
+    # Get each coordinates individually
+    logging.debug('Parameters: %s, %s, %s, %s', p0, p1, p2, p3)
+    (x0, y0) = p0
+    (x1, y1) = p1
+    (x2, y2) = p2
+    (x3, y3) = p3
+    # calculate terms of the interpolation
+    t = np.linspace(0, 1, 1000)
+    # TODO: define the best linspace step
+    # Check if this could be done directly on the tuples
+    # Not a big deal, since it should be converted to array anyway
+    xterm0 = (1 - t) * (1 - t) * (1 - t) * x0
+    yterm0 = (1 - t) * (1 - t) * (1 - t) * y0
+    xterm1 = 3 * (1 - t) * (1 - t) * t * x1
+    yterm1 = 3 * (1 - t) * (1 - t) * t * y1
+    xterm2 = 3 * (1 - t) * t * t * x2
+    yterm2 = 3 * (1 - t) * t * t * y2
+    xterm3 = t * t * t * x3
+    yterm3 = t * t * t * y3
+    xterm = xterm0 + xterm1 + xterm2 + xterm3
+    yterm = yterm0 + yterm1 + yterm2 + yterm3
+    # generate the arrays to return
+    bzi = np.array([])
+    bzp = np.array([])
+    for i in range((x0 + 1), x3):
+        rank = (np.abs(xterm - i)).argmin()
+        bzi = np.append(bzi, i)
+        bzp = np.append(bzp, yterm[rank])
+    logging.debug('Bezier curve i: %s', bzi)
+    logging.debug('Bezier curve p: %s', bzp)
+    return bzi, bzp
 
 def get_seq(kf):
     '''Generate the full sequence'''
     # Step 1: create the kf np arrays
     kfi = np.array(get_fnums(kf))
-    kfp = np.array(get_j_poses(kf))
+    kfp = np.array(get_jposes(kf))
     logging.debug('Keyframes array i: %s', kfi)
     logging.debug('Keyframes array p: %s', kfp)
     # Step2: create the if np arrays
@@ -129,52 +210,17 @@ def get_seq(kf):
     logging.debug('Sequence frames array p: %s', sfp)
     logging.debug('Sequence frames array t: %s', sft)
     return sfi, sfp, sft
-    
-def bezier_curve(p0, p1, p2, p3):
-    '''Return the interpolated value using a cubic Bezier curve'''
-    logging.debug('Call function bezier_curve()')      
-    # Get each coordinates individually
-    logging.debug('Parameters: %s, %s, %s, %s', p0, p1, p2, p3)
-    (x0, y0) = p0
-    (x1, y1) = p1
-    (x2, y2) = p2
-    (x3, y3) = p3
-    # calculate terms of the interpolation
-    t = np.linspace(0, 1, 1000)
-    # TODO: define the best linspace step
-    # Check if this could be done directly on the tuples
-    # Not a big deal, since it should be converted to array anyway
-    xterm0 = (1 - t) * (1 - t) * (1 - t) * x0
-    yterm0 = (1 - t) * (1 - t) * (1 - t) * y0
-    xterm1 = 3 * (1 - t) * (1 - t) * t * x1
-    yterm1 = 3 * (1 - t) * (1 - t) * t * y1
-    xterm2 = 3 * (1 - t) * t * t * x2
-    yterm2 = 3 * (1 - t) * t * t * y2
-    xterm3 = t * t * t * x3
-    yterm3 = t * t * t * y3
-    xterm = xterm0 + xterm1 + xterm2 + xterm3
-    yterm = yterm0 + yterm1 + yterm2 + yterm3
-    # generate the return arrays
-    bzi = np.array([])
-    bzp = np.array([])
-    for i in range((x0 + 1), x3):
-        rank = (np.abs(xterm - i)).argmin()
-        bzi = np.append(bzi, i)
-        bzp = np.append(bzp, yterm[rank])
-    logging.debug('Bezier curve i: %s', bzi)
-    logging.debug('Bezier curve p: %s', bzp)
-    return bzi, bzp
 
-def trans_it(pos_values):
-    '''Format pos values into frames dict'''
-    iframes = {'frequency': DEF_FREQ, 'frames': {}}
-    # TODO: should use the frequency from the parameters    
-    for pos_value in pos_values:
-        (i, p) = pos_value
-        vals = []
-        vals.append(p)
-        iframes['frames'][i] = vals
-    return iframes
+#def trans_it(pos_values):
+#    '''Format pos values into frames dict'''
+#    iframes = {'frequency': DEF_FREQ, 'frames': {}}
+#    # TODO: should use the frequency from the parameters    
+#    for pos_value in pos_values:
+#        (i, p) = pos_value
+#        vals = []
+#        vals.append(p)
+#        iframes['frames'][i] = vals
+#    return iframes
     
 # TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
@@ -185,11 +231,12 @@ class SequenceEditor(cmd.Cmd):
         '''Override and used for class variable'''
         logging.debug('Call function preloop()')
         # initialize variables
-        self.freq = DEF_FREQ
-        self.nb_joints = DEF_NB_JOINTS
-        self.fname = DEF_FNAME
-        self.jnames = ['grip1']
-        # self.keyframes = {'frequency': self.frequency, 'frames': {}}
+        self.param = {
+                'freq': DEF_FREQ,
+                'nb_joints': DEF_NB_JOINTS,
+                'wname': DEF_WNAME,
+                'jnames': ['grip1'],
+            }
         self.kf = []        
         print("'Crtl+D' or EOF to quit")
         is_frame0(self.kf)
@@ -197,13 +244,20 @@ class SequenceEditor(cmd.Cmd):
     def do_param_disp(self, line):
         '''Display a list of the current parameters'''
         logging.debug('Call function do_param_disp()')
-        print('Frequency: %i' % self.freq)
-        print('Number of joint(s): %i' % self.nb_joints)
-        print('File name: %s' % self.fname)
+        print('Frequency: %i' % self.param['freq'])
+        print('Number of joint(s): %i' % self.param['nb_joints'])
+        print('Work name: %s' % self.param['wname'])
+        is_frame0(self.kf)
+
+    def do_param_set(self, line):
+        '''Set the number of joints'''
+        (action, val) = parse_param_set(line)
+        if action:
+            action(self, val)
         is_frame0(self.kf)
 
     def do_kframe_disp(self, line):
-        '''Insert a new keyframe'''
+        '''Display the keyframes'''
         logging.debug('Call function do_kframe_disp()')
         print self.kf
         is_frame0(self.kf)
@@ -212,24 +266,25 @@ class SequenceEditor(cmd.Cmd):
         '''Insert a new keyframe'''
         logging.debug('Call function do_kframe_add()')
         fnum  = parse_kframe_add(line)
-        j_poses = []
-        for i in range(self.nb_joints):
-            j_pose = float(input(
+        jposes = []
+        for i in range(self.param['nb_joints']):
+            jpose = float(input(
                     'Enter value for joint %i / %i: '  %
-                    ((i + 1), self.nb_joints)
+                    ((i + 1), self.param['nb_joints'])
                 ))
-            j_poses.append(j_pose)
-        kf_new = (fnum, j_poses)
+            jposes.append(jpose)
+        kf_new = (fnum, jposes)
         self.kf.append(kf_new)
         sort_kframes(self.kf)
         is_frame0(self.kf)
 
     def do_kframe_save(self, line):
         '''Save the current key frames'''
-        # TODO: store parameters in the dump
         logging.debug('Call function do_kframe_save()')
-        f = open(self.fname, 'w')
-        pickle.dump(self.kf, f)
+        fname = self.param['wname'] + '_kf.txt' 
+        data = {'param': self.param, 'kf': self.kf}
+        f = open(fname, 'w')
+        pickle.dump(data, f)
         f.close()
         is_frame0(self.kf)
         
@@ -237,12 +292,16 @@ class SequenceEditor(cmd.Cmd):
         '''Open a key frames file'''
         # TODO: load parameter from the dump (see above)
         logging.debug('Call function do_kframe_open()')
-        f = open(self.fname, 'r')
-        self.kf = pickle.load(f) 
-        f.close()
-        sort_kframes(self.kf)
-        logging.debug('Key frames loaded: %s', self.kf)
-        print('Use kframe_disp to check the content')
+        fname = parse_kframe_open(line)
+        if fname:
+            f = open(fname, 'r')
+            data = pickle.load(f) 
+            f.close()
+            self.param = data['param']
+            self.kf = data['kf']
+            sort_kframes(self.kf)
+            logging.debug('Key frames loaded: %s', self.kf)
+            print('Use kframe_disp to check the content')
         is_frame0(self.kf)
                 
     def do_seq_disp(self, line):
