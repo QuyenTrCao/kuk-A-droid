@@ -48,18 +48,17 @@ def get_fnums(kf):
     logging.debug('Frames numbers: %s', fnums)   
     return fnums
 
-#def get_jposes(kf):
-#    '''Return an array with the arrays poses'''     
-#    logging.debug('Call function get_jposes()')
-#    jposes = [jposes for (fnum, jposes) in kf]
-#    return jposes    
+def get_jposes(kf):
+    '''Return an array with the arrays poses'''     
+    logging.debug('Call function get_jposes()')
+    jposes = [jposes for (fnum, jposes) in kf]
+    return jposes    
  
-def get_coord(frame):
+def get_coord(frame, i):
     '''Return point coordinates from frames'''
     logging.debug('Call function get_coord()')
     (x, poses) = frame
-    y = poses[0]
-    # TODO: adapt for several joints
+    y = poses[i]
     return (x, y)
     
 def sort_kframes(kf):
@@ -93,20 +92,6 @@ def parse_kframe_open(line):
     fname = args [0] + '_kf.txt'
     return fname
 
-def parse_param_set(line):
-    '''Parse the input for the set parameter function'''
-    logging.debug('Call function parse_param_set()')
-    args = str.split(line)
-    if args[0] in SET_PARAM_FCTS:
-        fct = SET_PARAM_FCTS[args[0]]
-        val = args[1]
-        return (fct, val)
-    else:
-        logging.warning('Parameter not found')
-        print('Unknown parameter: %s' % args[0])
-        print('Available parameters: %s ' % SET_PARAM_FCTS.keys())
-        return None, None
-
 # set parameters functions
 def set_nb_joints(obj, val):
     '''Set number of joints'''
@@ -123,11 +108,24 @@ def set_work_name(obj, val):
     logging.debug('Call function set_work_name()')
     obj.param['wname'] = val 
 
-SET_PARAM_FCTS = {
+def parse_param_set(line):
+    '''Parse the input for the set parameter function'''
+    logging.debug('Call function parse_param_set()')
+    args = str.split(line)
+    param_to_fcts = {
         'nb_joints': set_nb_joints,
         'freq': set_freq,
         'work_name': set_work_name
     }
+    if args[0] in param_to_fcts:
+        fct = param_to_fcts[args[0]]
+        val = args[1]
+        return (fct, val)
+    else:
+        logging.warning('Parameter not found')
+        print('Unknown parameter: %s' % args[0])
+        print('Available parameters: %s ' % SET_PARAM_FCTS.keys())
+        return None, None
 
 def can_gen_seq(kf):
     '''Check if the sequence can be generated'''
@@ -143,7 +141,7 @@ def bezier_curve(p0, p1, p2, p3):
     '''Return the interpolated values using a cubic Bezier curve'''
     logging.debug('Call function bezier_curve()')      
     # Get each coordinates individually
-    logging.debug('Parameters: %s, %s, %s, %s', p0, p1, p2, p3)
+    logging.debug('Control points: %s, %s, %s, %s', p0, p1, p2, p3)
     (x0, y0) = p0
     (x1, y1) = p1
     (x2, y2) = p2
@@ -184,14 +182,20 @@ def get_seq(kf):
     # Step2: create the if np arrays
     ifi = np.array([])
     ifp = np.array([])
+    nb_joints = len(kfp[0])
+    logging.info('Number of joints: %i', nb_joints) 
     for (kfs, kfe) in zip(kf[:-1], kf[1:]):
-        p0 = (x0, y0) = get_coord(kfs)
-        p3 = (x3, y3) = get_coord(kfe)
-        p1 = (x1, y1) = (((x3 - x0) * 0.25 + x0), y0)
-        p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
-        (bfi, bfp) = bezier_curve(p0, p1, p2, p3) 
-        ifi = np.append(ifi, bfi)
-        ifp = np.append(ifp, bfp)
+        for j in range(nb_joints):
+            # TODO: ugly code, use an enumate on the joints name
+            print kfs
+            p0 = (x0, y0) = get_coord(kfs, j)
+            p3 = (x3, y3) = get_coord(kfe, j)
+            p1 = (x1, y1) = (((x3 - x0) * 0.25 + x0), y0)
+            p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
+            # TODO: extract interpolated i, should be done 1 time
+            (bfi, bfp) = bezier_curve(p0, p1, p2, p3) 
+            ifi = np.append(ifi, bfi)
+            ifp = np.append(ifp, bfp)
     logging.debug('Interpolated frames array i: %s', ifi)
     logging.debug('Interpolated frames array p: %s', ifp)
     # Step3: merge key frames and interpolated frames
