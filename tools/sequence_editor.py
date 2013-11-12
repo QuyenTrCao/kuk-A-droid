@@ -180,10 +180,11 @@ def get_seq(kf):
     logging.debug('Keyframes array i: %s', kfi)
     logging.debug('Keyframes array p: %s', kfp)
     # Step2: create the if np arrays
-    ifi = np.array([])
-    ifp = np.array([])
     nb_joints = len(kfp[0])
     logging.info('Number of joints: %i', nb_joints) 
+    ifi = [np.array([])] * nb_joints
+    ifp = [np.array([])] * nb_joints
+    print ifi, ifp
     for (kfs, kfe) in zip(kf[:-1], kf[1:]):
         for j in range(nb_joints):
             # TODO: ugly code, use an enumate on the joints name
@@ -194,22 +195,23 @@ def get_seq(kf):
             p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
             # TODO: extract interpolated i, should be done 1 time
             (bfi, bfp) = bezier_curve(p0, p1, p2, p3) 
-            ifi = np.append(ifi, bfi)
-            ifp = np.append(ifp, bfp)
+            ifi[j] = np.append(ifi[j], bfi)
+            ifp[j] = np.append(ifp[j], bfp)
     logging.debug('Interpolated frames array i: %s', ifi)
     logging.debug('Interpolated frames array p: %s', ifp)
     # Step3: merge key frames and interpolated frames
     sfi = np.array([])
-    sfp = np.array([])
+    sfp = [np.array([])] * nb_joints
     sft = np.array([])
     for i in range(0, (np.amax(kfi) + 1)):
         sfi = np.append(sfi, i)
-        if i in kfi:
-            sfp = np.append(sfp, kfp[np.where(kfi==i)])
-            sft = np.append(sft, 'k')
-        if i in ifi:
-            sfp = np.append(sfp, ifp[np.where(ifi==i)])
-            sft = np.append(sft, 'i')
+        for j in range(nb_joints):
+            if i in kfi:
+                sfp[j] = np.append(sfp[j], kfp[j][np.where(kfi==i)])
+                sft = np.append(sft, 'k')
+            if i in ifi[0]:
+                sfp[j] = np.append(sfp[j], ifp[j][np.where(ifi==i)])
+                sft = np.append(sft, 'i')
     logging.debug('Sequence frames array i: %s', sfi)
     logging.debug('Sequence frames array p: %s', sfp)
     logging.debug('Sequence frames array t: %s', sft)
