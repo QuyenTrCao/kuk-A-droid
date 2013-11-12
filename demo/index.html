@@ -434,7 +434,7 @@
 				f0.add( jointConfig, 'joint_3', -45, 225 ).listen().onChange( function() { arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad; });
 				f0.add( jointConfig, 'joint_4', -110, 110 ).listen().onChange( function() { arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad; });
 				f0.add( jointConfig, 'joint_5', 0, 360 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; });
-				f0.add( jointConfig, 'finger', 0, 2 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; });
+				f0.add( jointConfig, 'finger', 0, 2 ).listen().onChange( function() { right_finger.position.z = -jointConfig.finger; left_finger.position.z = jointConfig.finger; });
 				f0.open();
 			}
 
@@ -454,7 +454,7 @@
 				arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad;
 				arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad;
 				arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad;
-				right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger;
+				right_finger.position.z = -jointConfig.finger; left_finger.position.z = jointConfig.finger;
 			}
 
 			function animationEnd() {
