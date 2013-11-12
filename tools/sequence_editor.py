@@ -124,7 +124,7 @@ def parse_param_set(line):
     else:
         logging.warning('Parameter not found')
         print('Unknown parameter: %s' % args[0])
-        print('Available parameters: %s ' % SET_PARAM_FCTS.keys())
+        print('Available parameters: %s ' % param_to_fcts.keys())
         return None, None
 
 def can_gen_seq(kf):
