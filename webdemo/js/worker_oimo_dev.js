@@ -102,13 +102,6 @@ self.onmessage = function (e) {
     if(phase === "CLEAR"){
         clearWorld();
     }
-    /*if(phase === "NEXT") initNextDemo();
-    if(phase === "PREV") initPrevDemo();
-    if(phase === "BONESLIST"){ 
-        bonesPosition = e.data.pos; 
-        bonesRotation = e.data.rot;
-        startDemo();
-    }*/
 }
 
 //--------------------------------------------------
