@@ -86,6 +86,7 @@
 			//physics
 			var OimoWorker = new Worker('webdemo/js/worker_oimo_dev.js');
 			OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
+			var isPhysicsOn = false;
 
 			window.onload = init;
 			
@@ -156,8 +157,8 @@
 				var groundMap = new THREE.ImageUtils.loadTexture( AssetsFolder + "ground.jpg" );
 				groundMap.repeat.set( 2000, 2000 );
 				groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
-				var mat00 = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x606060 } );
-				var plane = new THREE.Mesh( geometry, mat00 );
+				var matGround = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x606060 } );
+				var plane = new THREE.Mesh( geometry, matGround );
 				plane.rotation.x = 90*ToRad;
 				plane.receiveShadow = true;
 				plane.castShadow = false;
@@ -281,7 +282,7 @@
 				animate();
 				addAnimation();
 				//showBones();
-				startPhysics();
+				//startPhysics();
 				addGUI();
 			}
 
@@ -334,11 +335,14 @@
 				controls.tz = Math.cos( controls.rotation+90*ToRad ) * sideDelta;
 
 				youbot.rotation.y = controls.rotation - 90*ToRad;
-				youbot.position.x += controls.vx;
-				youbot.position.z += controls.vz;
+				//youbot.position.x += controls.vx;
+				//youbot.position.z += controls.vz;
 
-				youbot.position.x += controls.tx;
-				youbot.position.z += controls.tz;
+				//youbot.position.x += controls.tx;
+				//youbot.position.z += controls.tz;
+
+				youbot.position.x += controls.vx+controls.tx;
+				youbot.position.z += controls.vz+controls.tz;
 
 				// wheel animation
 				var wSpeed = delta * controls.wheelRotation;
@@ -368,6 +372,8 @@
 				if(!camPos.automove)cameraFollow(youbot.position);
 				sunLight.position.set(youbot.position.x+120, 200, youbot.position.z+100);
 				sunLight.target.position.set(youbot.position.x, 0, youbot.position.z );
+
+				if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
 			}
 
 			//-----------------------------------------------------
@@ -406,11 +412,14 @@
 			//-----------------------------------------------------
 
 			var geo01 = new THREE.CubeGeometry( 1, 1, 1 );
-			var geo02 = new THREE.SphereGeometry( 1, 16, 12 );
-			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );//new THREE.MeshBasicMaterial( { color: 0xff9933} );
+			var geo02 = new THREE.SphereGeometry( 1, 6, 4);
+			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );
+			var mat02 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff, transparent:true, opacity:0.1 } );
+			var mat03 = new THREE.MeshBasicMaterial( { color: 0xffaa00, wireframe: true } );
 
 			function startPhysics () {
-        	    OimoWorker.postMessage({tell:"INITWORLD", dt:1/60, iterations:8, G:-10 });
+        	    if(!isPhysicsOn)OimoWorker.postMessage({tell:"INITWORLD", dt:1/60, iterations:8, G:-10 });
+        	    else OimoWorker.postMessage({tell:"CLEAR"});
         	}
 
         	OimoWorker.onmessage = function(e) {
@@ -419,6 +428,7 @@
     	    	// create mesh
 	            if(phase === "INIT"){
 	            	createContentObjects(e.data);
+	            	isPhysicsOn = true;
 	            	OimoWorker.postMessage({tell:"UPDATE"});
 				}
 
@@ -430,11 +440,11 @@
 
         	    	// Update rendering meshes
         	    	for(var i=0; i!==max; i++){
-        	    		if( content.children[i] ){
+        	    		if( content.children[i] && e.data.types[i]!==0){
             	    		mesh = content.children[i];
-            	    		if( e.data.sleeps[i]==0){
+            	    		if( e.data.sleeps[i]==0 ){
             	    			n = 12*i;
-	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3]*100, m[n+4], m[n+5], m[n+6], m[n+7]*100, m[n+8], m[n+9], m[n+10], m[n+11]*100, 0, 0, 0, 1);
+	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3]*10, m[n+4], m[n+5], m[n+6], m[n+7]*10, m[n+8], m[n+9], m[n+10], m[n+11]*10, 0, 0, 0, 1);
 	            	    		mesh.position.getPositionFromMatrix( mtx );
 						    	mesh.rotation.setFromRotationMatrix( mtx );
 						    }
@@ -456,10 +466,24 @@
 			    	switch(data.types[i]){
 			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set( s[0], s[0], -s[0] ); break; // sphere
 			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set( s[0], s[1],-s[2] ); break; // box
+			    		case 3: mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set( s[0], s[1],-s[2] );  mesh.visible = true; break; // droid
 			    	}
+			    	if(data.types[i]!==3){
+			    		mesh.receiveShadow = true;
+			    		mesh.castShadow = true;
+			    	}
+
 			    	content.add( mesh );
 			    }
+    	    }
 
+    	    function clearContent(){
+    	    	var obj, i;
+			    for ( i = content.children.length - 1; i >= 0 ; i -- ) {
+						obj = content.children[ i ];
+						content.remove(obj);
+				}
+				isPhysicsOn = false;
     	    }
 
 			//-----------------------------------------------------
@@ -479,6 +503,7 @@
 					case 32:                   key[6]=1; break; // space
 					case 17: case 67:          key[7]=1; break; // ctrl, C
 				}
+				sendKey();
 			}
 
 			function onKeyUp ( event ) {
@@ -492,11 +517,15 @@
 					case 32:                   key[6]=0; break; // space          
 					case 17: case 67:          key[7]=0; break; // ctrl, C
 				}
+				sendKey();
 			}
+
+			function sendKey(){ if(isPhysicsOn)OimoWorker.postMessage({tell:"KEY", key:key}); }
 
 			//-----------------------------------------------------
 			//  BONES STUCTURE
 			//-----------------------------------------------------
+			
 			var vBones = [];
 
 			function showBones() {
@@ -523,6 +552,7 @@
 			//-----------------------------------------------------
 
 			var jointConfig = { joint_1:0, joint_2:90, joint_3:90, joint_4:0, joint_5:0, finger:0 };
+			var options = {physics:false};
 
 			function addGUI() {
 				gui = new dat.GUI();
@@ -534,6 +564,11 @@
 				f0.add( jointConfig, 'joint_5', 0, 360 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; });
 				f0.add( jointConfig, 'finger', 0, 2 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; });
 				f0.open();
+
+				var f1 = gui.addFolder('OPTION');
+				f1.add( options, 'physics' ).onChange( function() { startPhysics() });
+
+				f1.open();
 			}
 
 			//-----------------------------------------------------
@@ -541,7 +576,7 @@
 			//-----------------------------------------------------
 
 			function addAnimation() {
-				TweenLite.to(jointConfig, 3, {joint_2: 0, joint_3: 180, joint_4:-100, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
+				TweenLite.to(jointConfig, 3, {joint_2: 0, joint_3: 180, joint_4:-110, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
 				TweenLite.to(jointConfig, 0.5, {joint_5:180, finger:2, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
 				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate, onComplete: animationEnd });
 			}

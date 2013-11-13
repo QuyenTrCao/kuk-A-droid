@@ -24,7 +24,8 @@ var Vec3, Quat, Mat33;
 // physics variable
 var world;
 var dt = 1/60;
-var scale = 100;
+var scale = 10;
+var invScale = 0.1;
 var iterations = 8;
 var Gravity = -10, newGravity = -10;
 
@@ -42,10 +43,18 @@ var infos = new Float32Array(12);
 //var infos =[]; infos.length=12;
 var currentDemo = 0;
 var maxDemo = 8;
+
+var droid;
+var droidSet={rot:0}
+var wheels = [];
+var joints = [];
+var droidMove = [0,0,0, 0, 0];
+
+var renderLoop;
 // vehicle by key
-var car = null;
+/*var car = null;
 var van = null;
-var ball = null;
+var ball = null;*/
 
 //--------------------------------------------------
 //   WORKER MESSAGE
@@ -59,13 +68,43 @@ self.onmessage = function (e) {
         newGravity = e.data.G;
         initClass();
     }
-    if(phase === "UPDATE") update();
+    if(phase === "UPDATE"){
+        update();
+        //renderLoop = setInterval( update, timerStep );
+
+    } //
     if(phase === "KEY") userKey(e.data.key);
-    if(phase === "CAMERA") userCamera(e.data.cam);
+    //if(phase === "CAMERA") userCamera(e.data.cam);
     if(phase === "GRAVITY") newGravity = e.data.G;
-    if(phase === "NEXT") initNextDemo();
+    if(phase === "DROIDMOVE"){
+        droidMove[0] =  e.data.mx*invScale;///*invScale;
+        droidMove[1] =  e.data.mz*invScale;//*invScale;
+        droidMove[2] =  e.data.ry;
+        droidMove[3] =  e.data.px*invScale;///*invScale;
+        droidMove[4] =  e.data.pz*invScale;
+        /*droid.position.x = e.data.px*invScale;
+        droid.position.z = e.data.pz*invScale;
+        droid.position.y = 0.6;
+        var sin = Math.sin(e.data.ry * 0.5);
+        var cos = Math.cos(e.data.ry * 0.5);
+        droid.orientation = new Quat(cos, 0, sin * 1, 0);*/
+        /*droid.linearVelocity.x =0;
+        droid.linearVelocity.z =0;
+        droid.linearVelocity.y =0;
+        droid.angularVelocity.x =0;
+        droid.angularVelocity.z =0;
+        droid.angularVelocity.y =0;*/
+        //update()
+        //droid.rotation = eulerToAxisAngle(0,  e.data.ry, 0);
+        //droid.rotation.y = e.data.ry;
+        //droid.position.y = 0.06;
+    } 
+    if(phase === "CLEAR"){
+        clearWorld();
+    }
+    /*if(phase === "NEXT") initNextDemo();
     if(phase === "PREV") initPrevDemo();
-    /*if(phase === "BONESLIST"){ 
+    if(phase === "BONESLIST"){ 
         bonesPosition = e.data.pos; 
         bonesRotation = e.data.rot;
         startDemo();
@@ -79,15 +118,26 @@ self.onmessage = function (e) {
 function update() {
     var t01 = Date.now();
 
-    world.step();
+    //world.step();
 
     var r, p, t, n;
     var max = bodys.length;
+    var sin, cos;
 
     for ( var i = 0; i !== max ; ++i ) {
         if( bodys[i].sleeping) sleeps[i] = 1;
         else{ 
             sleeps[i] = 0;
+            if(types[i]===3){
+                
+                //bodys[i].angularVelocity.scaleEqual(0.98)
+               /* bodys[i].position.x = droidMove[3];
+                bodys[i].position.z = droidMove[4];
+               
+                sin = Math.sin(droidMove[2]*0.5);
+                cos = Math.cos(droidMove[2]*0.5);
+                bodys[i].orientation = new Quat(cos, 0, sin * 1, 0);*/
+            }
             r = bodys[i].rotation;
             p = bodys[i].position;
             n = 12*i;
@@ -99,18 +149,22 @@ function update() {
         }
     }
 
-    if(Gravity!==newGravity){
+    /*if(Gravity!==newGravity){
         Gravity = newGravity;
         world.gravity = new Vec3(0, Gravity, 0);
         for ( var i = 0; i !== max ; ++i ) bodys[i].awake();
-    }
+    }*/
 
-    worldInfo();
+    world.step();
+    //worldInfo();
 
-    self.postMessage({tell:"RUN", infos: infos, matrix:matrix, sleeps:sleeps  })
+    //self.postMessage({tell:"RUN", infos: infos, matrix:matrix, sleeps:sleeps  })
+    self.postMessage({tell:"RUN", matrix:matrix, sleeps:sleeps, types:types  })
 
     delay = timerStep - (Date.now()-t01);
     timer = setTimeout(update, delay);
+    //timer = 
+    //setTimeout(update, 0);
 }
 
 //--------------------------------------------------
@@ -127,27 +181,47 @@ function getBonesInfo(name) {
 //   USER CAMERA
 //--------------------------------------------------
 
-function userCamera(cam) {
+/*function userCamera(cam) {
     if(ball !== null ){
         ball.Phi(cam[1]);
     }
-}
+}*/
 
 //--------------------------------------------------
 //   USER KEY
 //--------------------------------------------------
 
 function userKey(key) {
-    if(van !== null ){
-        van.update((key[0]===1 ? 1 : 0) + (key[1]===1 ? -1 : 0), (key[2]===1 ? -1 : 0) + (key[3]===1 ? 1 : 0));
-        if(key[5]===1)van.move(0,2,0);
+    var phi = (-matrixToEuler(droid.rotation)[1])+(-90*ToRad);//droidSet.rot*ToRad;
+    var speed = 0.5;
+    if (key[0] === 1) {
+        droid.linearVelocity.x -= Math.cos(phi) * speed;
+        droid.linearVelocity.z -= Math.sin(phi) * speed;
+        /*droid.linearVelocity.x = -Math.cos(phi) * speed;
+        droid.linearVelocity.z = -Math.sin(phi) * speed;*/
     }
-    if(car !== null ){
-        car.update((key[0]===1 ? 1 : 0) + (key[1]===1 ? -1 : 0), (key[2]===1 ? -1 : 0) + (key[3]===1 ? 1 : 0));
-        if(key[5]===1)car.move(0,2,0);
+    if (key[1] === 1) {
+        droid.linearVelocity.x += Math.cos(phi) * speed;
+        droid.linearVelocity.z += Math.sin(phi) * speed;
+        //droid.linearVelocity.x = Math.cos(phi) * speed;
+        //droid.linearVelocity.z = Math.sin(phi) * speed;
     }
-    if(ball !== null ){
-        ball.update(key[0], key[1], key[2], key[3]);
+    if (key[2] ===1) {
+        droid.angularVelocity.y=-2;//*ToRad;
+        //droidSet.rot-=2;
+        //droid.linearVelocity.x -= Math.cos(phi - Math.PI * 0.5) * speed;
+        //droid.linearVelocity.z -= Math.sin(phi - Math.PI * 0.5) * speed;
+    }
+    if (key[3] ===1) {
+        droid.angularVelocity.y=2;//*ToRad;
+        //droidSet.rot+=2;
+        //droid.linearVelocity.x -= Math.cos(phi + Math.PI * 0.5) * speed;
+        //droid.linearVelocity.z -= Math.sin(phi + Math.PI * 0.5) * speed;
+    }
+    if (key[0] === 0 && key[1] === 0 && key[2] === 0 && key[3] === 0) {
+        droid.linearVelocity.x = 0;
+        droid.linearVelocity.z = 0;
+        droid.angularVelocity.y=0;//.scaleEqual(0.98);
     }
 }
 
@@ -200,16 +274,44 @@ function initWorld(){
     types = [];
     sizes = [];
 
-   
-
     // ground
     var sc = new ShapeConfig();
     sc.density = 1;
-    sc.friction = 0.5;
-    sc.restitution = 0.5;
-    addRigid({type:"box", size:[20,10,20], pos:[0,-5,0], sc:sc});
+    //sc.friction = 0.2;
+    //sc.restitution = 0.1;
+    addRigid({type:"box", size:[200,100,200], pos:[0,-50,0], sc:sc});
+    //sc.friction = 0.2,
 
-    addRigid({type:"box", size:[0.1,0.1,0.1], pos:[0,1,0.8], sc:sc, move:true});
+    var h = 1.2;
+    //var h = 1.2;
+    var w = 1.58;
+    var d =  2.25;
+    var rad = 0.5;
+    sc.density = 10;
+    sc.friction = 0.5;
+    sc.relativePosition.init(0, h*0.5, 0);
+    droid = addRigid({type:"droid", size:[3.7,h,5.7], pos:[0,h*0.5,0], sc:sc, move:true, noSleep:true, rotation:[0,droidSet.rot*ToRad,0], noAdjust:true})//;
+
+    // create wheels
+    sc.friction = 4;
+    sc.relativePosition.init(0, 0, 0);
+    var wy = h*0.5;
+    wheels[0] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ -w , wy,  -d], sc:sc, move:true});
+    wheels[1] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ w, wy,- d], sc:sc, move:true});
+    wheels[2] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ -w, wy, d], sc:sc, move:true});
+    wheels[3] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ w, wy, d], sc:sc, move:true});
+
+    joints[0] = addJoint({type:"wheel", body1:droid, body2:wheels[0], pos1:[-w, 0, -d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], spring:[8,1] });
+    joints[1] = addJoint({type:"wheel", body1:droid, body2:wheels[1], pos1:[w, 0, -d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], spring:[8,1] });
+    joints[2] = addJoint({type:"wheel", body1:droid, body2:wheels[2], pos1:[-w, 0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
+    joints[3] = addJoint({type:"wheel", body1:droid, body2:wheels[3], pos1:[w, 0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
+
+
+    sc.friction = 0.5;
+    //sc.restitution = 0.5;
+    sc.relativePosition.init(0, 0, 0);
+    sc.density = 1;
+    addRigid({type:"box", size:[1,1,1], pos:[0,1,5], sc:sc, move:true, noSleep:true});
 
     var N = bodys.length;
     matrix = new Float32Array(N*12);
@@ -224,8 +326,8 @@ function clearWorld(){
     clearTimeout(timer);
     if(world != null) world.clear();
     // Clear control object
-    if(car !== null ) car = null;
-    if(ball !== null ) ball = null;
+    //if(car !== null ) car = null;
+    //if(ball !== null ) ball = null;
     // Clear three object
     self.postMessage({tell:"CLEAR"});
 }
@@ -256,8 +358,9 @@ function addRigid(obj){
     switch(obj.type){
         case "sphere": shape=new SphereShape(sc, s[0]); t=1; break;
         case "box": shape=new BoxShape(sc, s[0], s[1], s[2]); t=2; break;
-        case "bone": shape=new BoxShape(sc, s[0], s[1], s[2]); t=10; break;
-        /*case "cylinder": shape = new SphereShape(sc, s[0] ); t=3; break;// fake cylinder
+        case "droid": shape=new BoxShape(sc, s[0], s[1], s[2]); t=3; break;
+       /* case "bone": shape=new BoxShape(sc, s[0], s[1], s[2]); t=10; break;
+        case "cylinder": shape = new SphereShape(sc, s[0] ); t=3; break;// fake cylinder
         case "dice": shape=new BoxShape(sc, s[0], s[1], s[2]); t=4; break;  
         case "wheel": shape = new SphereShape(sc, s[0] ); t=5; break;// fake cylinder
         case "wheelinv": shape = new SphereShape(sc, s[0] ); t=6; break;// fake cylinder
@@ -275,10 +378,11 @@ function addRigid(obj){
     var body = new RigidBody(p[0], p[1], p[2], r[0], r[1], r[2], r[3]);
     
     body.addShape(shape);
-    if(shape2!=null)body.addShape(shape2);
+    //if(shape2!=null)body.addShape(shape2);
     //if(t===5)body.addShape(new BoxShape(sc, s[0] * 2, 0.2, 0.2));
 
     if(!move)body.setupMass(0x2);
+   // else body.setupMass(0x1, true);
     else{ 
         if(noAdjust)body.setupMass(0x1, false);
         else body.setupMass(0x1, true);
@@ -365,11 +469,11 @@ function worldInfo() {
 
 function eulerToAxisAngle   ( x, y, z ){
     // Assuming the angles are in radians.
-    var c1 = Math.cos(y*0.5);
+    var c1 = Math.cos(y*0.5);//heading
     var s1 = Math.sin(y*0.5);
-    var c2 = Math.cos(z*0.5);
+    var c2 = Math.cos(z*0.5);//altitude
     var s2 = Math.sin(z*0.5);
-    var c3 = Math.cos(x*0.5);
+    var c3 = Math.cos(x*0.5);//bank
     var s3 = Math.sin(x*0.5);
     var c1c2 = c1*c2;
     var s1s2 = s1*s2;
@@ -389,6 +493,27 @@ function eulerToAxisAngle   ( x, y, z ){
         z /= norm;
     }
     return [angle, x, y, z];
+}
+
+function matrixToEuler(m) {
+    var x, y, z;
+    // Assuming the angles are in radians.
+    if (m.e10 > 0.998) { // singularity at north pole
+        y = Math.atan2(m.e02,m.e22);
+        z = Math.PI/2;
+        x = 0;
+        //return [x, y, z];
+    }
+    if (m.e10 < -0.998) { // singularity at south pole
+        y = Math.atan2(m.e02,m.e22);
+        z = -Math.PI/2;
+        x = 0;
+        //return [x, y, z];
+    }
+    y = Math.atan2(-m.e20,m.e00);
+    x = Math.atan2(-m.e12,m.e11);
+    z = Math.asin(m.e10);
+    return [x, y, z];
 }
 
 function getDistance3d (p1, p2) {
