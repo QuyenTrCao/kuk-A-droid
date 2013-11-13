@@ -78,10 +78,15 @@
 			var wheel_geo_r, wheel_geo_l;
 			// object3d
 			var youbot;
+			var content;
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger;
-			
+
+			//physics
+			var OimoWorker = new Worker('webdemo/js/worker_oimo_dev.js');
+			OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
+
 			window.onload = init;
 			
 			function init() {
@@ -157,6 +162,9 @@
 				plane.receiveShadow = true;
 				plane.castShadow = false;
 				scene.add(plane);
+
+				content = new THREE.Object3D();
+				scene.add(content);
 
 				// load sea3d model
 				var loader = new THREE.SEA3D( true );	
@@ -272,6 +280,8 @@
 
 				animate();
 				addAnimation();
+				//showBones();
+				startPhysics();
 				addGUI();
 			}
 
@@ -392,6 +402,67 @@
 			}
 
 			//-----------------------------------------------------
+			//  PHYSICS
+			//-----------------------------------------------------
+
+			var geo01 = new THREE.CubeGeometry( 1, 1, 1 );
+			var geo02 = new THREE.SphereGeometry( 1, 16, 12 );
+			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );//new THREE.MeshBasicMaterial( { color: 0xff9933} );
+
+			function startPhysics () {
+        	    OimoWorker.postMessage({tell:"INITWORLD", dt:1/60, iterations:8, G:-10 });
+        	}
+
+        	OimoWorker.onmessage = function(e) {
+    	    	var phase = e.data.tell;
+
+    	    	// create mesh
+	            if(phase === "INIT"){
+	            	createContentObjects(e.data);
+	            	OimoWorker.postMessage({tell:"UPDATE"});
+				}
+
+				// update three object
+    	    	else if( phase === "RUN"){
+    	    		var max = e.data.sleeps.length;
+    	    		var m = e.data.matrix;
+        	    	var mtx, n, mesh;
+
+        	    	// Update rendering meshes
+        	    	for(var i=0; i!==max; i++){
+        	    		if( content.children[i] ){
+            	    		mesh = content.children[i];
+            	    		if( e.data.sleeps[i]==0){
+            	    			n = 12*i;
+	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3]*100, m[n+4], m[n+5], m[n+6], m[n+7]*100, m[n+8], m[n+9], m[n+10], m[n+11]*100, 0, 0, 0, 1);
+	            	    		mesh.position.getPositionFromMatrix( mtx );
+						    	mesh.rotation.setFromRotationMatrix( mtx );
+						    }
+				        }
+		            }
+	            }
+
+	            // clear three object
+				else if(phase === "CLEAR") clearContent();
+    	    }
+
+    	    function createContentObjects(data){
+    	    	var boneindex=0;
+    	    	var max = data.types.length;
+    	    	var mesh;
+    	    	var s;
+			    for(var i=0; i!==max; i++){
+			    	s = data.sizes[i] || [50,50,50];
+			    	switch(data.types[i]){
+			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set( s[0], s[0], -s[0] ); break; // sphere
+			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set( s[0], s[1],-s[2] ); break; // box
+			    	}
+			    	content.add( mesh );
+			    }
+
+    	    }
+
+			//-----------------------------------------------------
 			//  KEYBOARD
 			//-----------------------------------------------------
 
@@ -421,6 +492,30 @@
 					case 32:                   key[6]=0; break; // space          
 					case 17: case 67:          key[7]=0; break; // ctrl, C
 				}
+			}
+
+			//-----------------------------------------------------
+			//  BONES STUCTURE
+			//-----------------------------------------------------
+			var vBones = [];
+
+			function showBones() {
+				for(var i = 1;i!==5;i++ ){
+					vBones[i] = visibleBones();
+				}
+				arm_joint_1.add(vBones[1]);
+				arm_joint_2.add(vBones[2]);
+				arm_joint_3.add(vBones[3]);
+				arm_joint_4.add(vBones[4]);
+				arm_joint_5.add(vBones[5]);
+				//youbotBones
+			}
+
+			function visibleBones(link, p1, p2){
+				var bone = new THREE.Object3D();
+				bone.add(new THREE.AxisHelper( 10 ));
+				return bone;
+
 			}
 
 			//-----------------------------------------------------
