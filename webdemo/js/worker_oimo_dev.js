@@ -49,6 +49,7 @@ var droidSet={rot:0}
 var wheels = [];
 var joints = [];
 var droidMove = [0,0,0, 0, 0];
+var droidAngle = 0;
 
 var renderLoop;
 // vehicle by key
@@ -135,9 +136,9 @@ function update() {
             p = bodys[i].position;
             n = 12*i;
 
-            matrix[n+0]=r.e00; matrix[n+1]=r.e01; matrix[n+2]=r.e02; matrix[n+3]=p.x;
-            matrix[n+4]=r.e10; matrix[n+5]=r.e11; matrix[n+6]=r.e12; matrix[n+7]=p.y;
-            matrix[n+8]=r.e20; matrix[n+9]=r.e21; matrix[n+10]=r.e22; matrix[n+11]=p.z;
+            matrix[n+0]=r.e00; matrix[n+1]=r.e01; matrix[n+2]=r.e02; matrix[n+3]=p.x*scale;
+            matrix[n+4]=r.e10; matrix[n+5]=r.e11; matrix[n+6]=r.e12; matrix[n+7]=p.y*scale;
+            matrix[n+8]=r.e20; matrix[n+9]=r.e21; matrix[n+10]=r.e22; matrix[n+11]=p.z*scale;
             
         }
     }
@@ -185,13 +186,14 @@ function getBonesInfo(name) {
 //--------------------------------------------------
 
 function userKey(key) {
-    var phi = (-matrixToEuler(droid.rotation)[1])+(-90*ToRad);//droidSet.rot*ToRad;
+    moveDroid((key[0]===1 ? -1 : 0) + (key[1]===1 ? 1 : 0), (key[2]===1 ? -1 : 0) + (key[3]===1 ? 1 : 0));
+   /* var phi = (-matrixToEuler(droid.rotation)[1])+(-90*ToRad);//droidSet.rot*ToRad;
     var speed = 0.5;
     if (key[0] === 1) {
         droid.linearVelocity.x -= Math.cos(phi) * speed;
         droid.linearVelocity.z -= Math.sin(phi) * speed;
-        /*droid.linearVelocity.x = -Math.cos(phi) * speed;
-        droid.linearVelocity.z = -Math.sin(phi) * speed;*/
+        //droid.linearVelocity.x = -Math.cos(phi) * speed;
+        //droid.linearVelocity.z = -Math.sin(phi) * speed;
     }
     if (key[1] === 1) {
         droid.linearVelocity.x += Math.cos(phi) * speed;
@@ -215,7 +217,62 @@ function userKey(key) {
         droid.linearVelocity.x = 0;
         droid.linearVelocity.z = 0;
         droid.angularVelocity.y=0;//.scaleEqual(0.98);
+    }*/
+}
+
+function moveDroid (accelSign, handleSign) {
+    var breaking = droid.linearVelocity.dot(new Vec3(droid.rotation.e02, droid.rotation.e12, droid.rotation.e22)) * accelSign > 0;
+    var ratio = 0;
+    var v = droid.linearVelocity.length() * 3.6;
+    var maxSpeed = Math.PI * 2 / 60 * 1200; // 1200rpm
+    var minTorque = 40;
+    
+    if (breaking) minTorque *= 2;
+    
+    if (v < 10) ratio = 3;
+    else if (v < 30) ratio = 2;
+    else if (v < 70) ratio = 1.4;
+    else if (v < 100) ratio = 1.2;
+    else  ratio = 1;
+    
+    var speed = maxSpeed / ratio * accelSign;
+    var torque = minTorque * ratio * (accelSign * accelSign);
+    
+    /*var deg45 = Math.PI / 4;
+    droidAngle += handleSign * 0.02;
+    droidAngle *= 0.94;
+    droidAngle = droidAngle > deg45 ? deg45 : droidAngle < -deg45 ? -deg45 : droidAngle;*/
+    droid.angularVelocity.y = handleSign * 2;
+    
+    if(handleSign!==0){
+        joints[0].rotationalLimitMotor2.setMotor(speed, torque);
+        joints[1].rotationalLimitMotor2.setMotor(speed, -torque);
+        joints[2].rotationalLimitMotor2.setMotor(speed, -torque);
+        joints[3].rotationalLimitMotor2.setMotor(speed, torque);
+    }else{
+        joints[0].rotationalLimitMotor2.setMotor(speed, torque);
+        joints[1].rotationalLimitMotor2.setMotor(speed, torque);
+        joints[2].rotationalLimitMotor2.setMotor(speed, torque);
+       joints[3].rotationalLimitMotor2.setMotor(speed, torque);
     }
+    
+    //joints[0].rotationalLimitMotor1.setLimit(droidAngle, droidAngle);
+    //joints[1].rotationalLimitMotor1.setLimit(droidAngle, droidAngle);
+    
+    var axis = new Vec3(droid.rotation.e01, droid.rotation.e11, droid.rotation.e21); // up axis
+    
+    correctRotation(wheels[0]);
+    correctRotation(wheels[1]);
+    correctRotation(wheels[2]);
+    correctRotation(wheels[3]);
+}
+    
+function correctRotation(w) {
+    var axis1 = new Vec3(droid.rotation.e01, droid.rotation.e11, droid.rotation.e21);
+    var axis2 = new Vec3(w.rotation.e00, w.rotation.e10, w.rotation.e20);
+    var axis3 = new Vec3().sub(axis2, axis1.scaleEqual(axis1.dot(axis2)));
+    w.orientation.mul(new Quat().arc(axis2, axis3.normalize(axis3)), w.orientation);
+    w.orientation.normalize(w.orientation);
 }
 
 //--------------------------------------------------
@@ -272,39 +329,45 @@ function initWorld(){
     sc.density = 1;
     //sc.friction = 0.2;
     //sc.restitution = 0.1;
-    addRigid({type:"box", size:[200,100,200], pos:[0,-50,0], sc:sc});
+    addRigid({type:"box", size:[2000,100,2000], pos:[0,-50,0], sc:sc});
     //sc.friction = 0.2,
 
-    var h = 1.2;
+    var h = 12;
     //var h = 1.2;
-    var w = 1.58;
-    var d =  2.25;
-    var rad = 0.5;
+    var w = 15.8;
+    var d =  22.5;
+    var rad = 5;
     sc.density = 10;
-    sc.friction = 0.5;
-    sc.relativePosition.init(0, h*0.5, 0);
-    droid = addRigid({type:"droid", size:[3.7,h,5.7], pos:[0,h*0.5,0], sc:sc, move:true, noSleep:true, rotation:[0,droidSet.rot*ToRad,0], noAdjust:true})//;
+    //sc.friction = 0.5;
+   //sc.relativePosition.init(0, h*0.5*invScale, 0);
+    //sc.relativePosition.init(0, 5*invScale, 0);
+    droid = addRigid({type:"droid", size:[37,8,57], pos:[0,5,0], sc:sc, move:true, noSleep:true, rotation:[0,droidSet.rot*ToRad,0]})//, noAdjust:true;
 
     // create wheels
     sc.friction = 4;
     sc.relativePosition.init(0, 0, 0);
-    var wy = h*0.5;
-    wheels[0] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ -w , wy,  -d], sc:sc, move:true});
+    var wy = 2.5;
+    /*wheels[0] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ -w , wy,  -d], sc:sc, move:true});
     wheels[1] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ w, wy,- d], sc:sc, move:true});
     wheels[2] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ -w, wy, d], sc:sc, move:true});
-    wheels[3] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ w, wy, d], sc:sc, move:true});
+    wheels[3] = addRigid({type:"sphere", size:[rad, rad, rad], pos:[ w, wy, d], sc:sc, move:true});*/
+
+    wheels[0] = addRigid({type:"wl", size:[rad, rad, rad], pos:[ -w , wy,  -d], sc:sc, move:true});
+    wheels[1] = addRigid({type:"wr", size:[rad, rad, rad], pos:[ w, wy,- d], sc:sc, move:true});
+    wheels[2] = addRigid({type:"wr", size:[rad, rad, rad], pos:[ -w, wy, d], sc:sc, move:true});
+    wheels[3] = addRigid({type:"wl", size:[rad, rad, rad], pos:[ w, wy, d], sc:sc, move:true});
 
     joints[0] = addJoint({type:"wheel", body1:droid, body2:wheels[0], pos1:[-w, 0, -d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], spring:[8,1] });
     joints[1] = addJoint({type:"wheel", body1:droid, body2:wheels[1], pos1:[w, 0, -d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], spring:[8,1] });
-    joints[2] = addJoint({type:"wheel", body1:droid, body2:wheels[2], pos1:[-w, 0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
-    joints[3] = addJoint({type:"wheel", body1:droid, body2:wheels[3], pos1:[w, 0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
+    joints[2] = addJoint({type:"wheel", body1:droid, body2:wheels[2], pos1:[-w, -0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
+    joints[3] = addJoint({type:"wheel", body1:droid, body2:wheels[3], pos1:[w,0, d], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0] });
 
 
     sc.friction = 0.5;
     //sc.restitution = 0.5;
     sc.relativePosition.init(0, 0, 0);
     sc.density = 1;
-    addRigid({type:"box", size:[1,1,1], pos:[0,1,5], sc:sc, move:true, noSleep:true});
+    addRigid({type:"box", size:[10,10,10], pos:[0,10,50], sc:sc, move:true, noSleep:true});
 
     var N = bodys.length;
     matrix = new Float32Array(N*12);
@@ -349,26 +412,14 @@ function addRigid(obj){
     var shape, t;
     var shape2 = null;
     switch(obj.type){
-        case "sphere": shape=new SphereShape(sc, s[0]); t=1; break;
-        case "box": shape=new BoxShape(sc, s[0], s[1], s[2]); t=2; break;
-        case "droid": shape=new BoxShape(sc, s[0], s[1], s[2]); t=3; break;
-       /* case "bone": shape=new BoxShape(sc, s[0], s[1], s[2]); t=10; break;
-        case "cylinder": shape = new SphereShape(sc, s[0] ); t=3; break;// fake cylinder
-        case "dice": shape=new BoxShape(sc, s[0], s[1], s[2]); t=4; break;  
-        case "wheel": shape = new SphereShape(sc, s[0] ); t=5; break;// fake cylinder
-        case "wheelinv": shape = new SphereShape(sc, s[0] ); t=6; break;// fake cylinder
+        case "sphere": shape=new SphereShape(sc, s[0]*invScale); t=1; break;
+        case "box": shape=new BoxShape(sc, s[0]*invScale, s[1]*invScale, s[2]*invScale); t=2; break;
+        case "droid": shape=new BoxShape(sc, s[0]*invScale, s[1]*invScale, s[2]*invScale); t=3; break;
 
-        case "column": shape = new BoxShape(sc, s[0]*2, s[1], s[2]*2);  t=7; break;// fake cylinder
-        case "columnBase": shape = new BoxShape(sc, s[0], s[1], s[2]); t=8; break;
-        case "columnTop": shape = new BoxShape(sc, s[0], s[1], s[2]); t=9; break;
-        case "nball": shape = new SphereShape(sc, s[0]); t=11; break;
-        case "gyro": shape = new SphereShape(sc, s[0]); t=12; break;
-        case "carBody": shape=new BoxShape(sc, s[0], s[1], s[2]); t=13; break;
-
-        case "vanBody": shape=new BoxShape(sc, s[0], s[1], s[2]); t=14; break;
-        case "vanwheel": shape = new SphereShape(sc, s[0] ); t=15; break;// fake cylinder*/
+        case "wr": shape=new SphereShape(sc, s[0]*invScale); t=4; break;
+        case "wl": shape=new SphereShape(sc, s[0]*invScale); t=5; break;
     }
-    var body = new RigidBody(p[0], p[1], p[2], r[0], r[1], r[2], r[3]);
+    var body = new RigidBody(p[0]*invScale, p[1]*invScale, p[2]*invScale, r[0], r[1], r[2], r[3]);
     
     body.addShape(shape);
     //if(shape2!=null)body.addShape(shape2);
@@ -381,7 +432,8 @@ function addRigid(obj){
         else body.setupMass(0x1, true);
         bodys.push(body);
         types.push(t);
-        sizes.push([s[0]*scale, s[1]*scale, s[2]*scale])
+        //sizes.push([s[0]*scale, s[1]*scale, s[2]*scale])
+        sizes.push([s[0], s[1], s[2]])
         if(noSleep)body.allowSleep = false;
         else body.allowSleep = true;
     }
@@ -410,8 +462,8 @@ function addJoint(obj){
     jc.allowCollision=collision;
     jc.localAxis1.init(axis1[0], axis1[1], axis1[2]);
     jc.localAxis2.init(axis2[0], axis2[1], axis2[2]);
-    jc.localAnchorPoint1.init(pos1[0], pos1[1], pos1[2]);
-    jc.localAnchorPoint2.init(pos2[0], pos2[1], pos2[2]);
+    jc.localAnchorPoint1.init(pos1[0]*invScale, pos1[1]*invScale, pos1[2]*invScale);
+    jc.localAnchorPoint2.init(pos2[0]*invScale, pos2[1]*invScale, pos2[2]*invScale);
     jc.body1 = obj.body1;
     jc.body2 = obj.body2;
     var joint;
