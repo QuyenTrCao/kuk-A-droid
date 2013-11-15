@@ -162,72 +162,65 @@ def bezier_curve(p0, p1, p2, p3):
     xterm = xterm0 + xterm1 + xterm2 + xterm3
     yterm = yterm0 + yterm1 + yterm2 + yterm3
     # generate the arrays to return
-    bzi = np.array([])
     bzp = np.array([])
     for i in range((x0 + 1), x3):
         rank = (np.abs(xterm - i)).argmin()
-        bzi = np.append(bzi, i)
         bzp = np.append(bzp, yterm[rank])
-    logging.debug('Bezier curve i: %s', bzi)
     logging.debug('Bezier curve p: %s', bzp)
-    return bzi, bzp
+    return bzp
 
 def get_seq(kf):
     '''Generate the full sequence'''
+    nb_joints = len(kf[0][1])
+    logging.info('Number of joints: %i', nb_joints) 
     # Step 1: create the kf np arrays
-    kfi = np.array(get_fnums(kf))
-    kfp = np.array(get_jposes(kf))
+    fnums = get_fnums(kf)
+    kfi = np.array([])
+    for fnum in fnums:
+        kfi = np.append(kfi, fnum)
     logging.debug('Keyframes array i: %s', kfi)
+    kfp = []
+    for j in range(nb_joints):
+        poses = np.array([])
+        for frame in kf:
+            poses = np.append(poses, frame[1][j])
+        kfp.append(poses)
     logging.debug('Keyframes array p: %s', kfp)
     # Step2: create the if np arrays
-    nb_joints = len(kfp[0])
-    logging.info('Number of joints: %i', nb_joints) 
-    ifi = [np.array([])] * nb_joints
+    ifi = [np.array([])]
+    for (kfis, kfie) in zip(kfi[:-1], kfi[1:]):
+        print kfis, kfie
+        for i in range((int(kfis) + 1), int(kfie)):
+            ifi = np.append(ifi, i)
+    logging.debug('Interpolated frames array i: %s', ifi)
     ifp = [np.array([])] * nb_joints
-    print ifi, ifp
-    for (kfs, kfe) in zip(kf[:-1], kf[1:]):
-        for j in range(nb_joints):
-            # TODO: ugly code, use an enumate on the joints name
-            print kfs
+    for j in range(nb_joints):
+        for (kfs, kfe) in zip(kf[:-1], kf[1:]):
             p0 = (x0, y0) = get_coord(kfs, j)
             p3 = (x3, y3) = get_coord(kfe, j)
             p1 = (x1, y1) = (((x3 - x0) * 0.25 + x0), y0)
             p2 = (x2, y2) = (((x3 - x0) * 0.75 + x0), y3)
-            # TODO: extract interpolated i, should be done 1 time
-            (bfi, bfp) = bezier_curve(p0, p1, p2, p3) 
-            ifi[j] = np.append(ifi[j], bfi)
+            bfp = bezier_curve(p0, p1, p2, p3) 
             ifp[j] = np.append(ifp[j], bfp)
-    logging.debug('Interpolated frames array i: %s', ifi)
     logging.debug('Interpolated frames array p: %s', ifp)
     # Step3: merge key frames and interpolated frames
     sfi = np.array([])
     sfp = [np.array([])] * nb_joints
     sft = np.array([])
-    for i in range(0, (np.amax(kfi) + 1)):
+    for i in range(0, int(np.amax(kfi) + 1)):
         sfi = np.append(sfi, i)
         for j in range(nb_joints):
             if i in kfi:
                 sfp[j] = np.append(sfp[j], kfp[j][np.where(kfi==i)])
-                sft = np.append(sft, 'k')
-            if i in ifi[0]:
+                if j == 0: sft = np.append(sft, 'k')
+            if i in ifi:
                 sfp[j] = np.append(sfp[j], ifp[j][np.where(ifi==i)])
-                sft = np.append(sft, 'i')
+                if j == 0: sft = np.append(sft, 'i')
     logging.debug('Sequence frames array i: %s', sfi)
     logging.debug('Sequence frames array p: %s', sfp)
     logging.debug('Sequence frames array t: %s', sft)
     return sfi, sfp, sft
 
-#def trans_it(pos_values):
-#    '''Format pos values into frames dict'''
-#    iframes = {'frequency': DEF_FREQ, 'frames': {}}
-#    # TODO: should use the frequency from the parameters    
-#    for pos_value in pos_values:
-#        (i, p) = pos_value
-#        vals = []
-#        vals.append(p)
-#        iframes['frames'][i] = vals
-#    return iframes
-    
 # TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
 
@@ -325,7 +318,8 @@ class SequenceEditor(cmd.Cmd):
         logging.debug('Call function seq_plot()')
         if not can_gen_seq(self.kf): return
         (sfi, sfp, sft) = get_seq(self.kf)
-        plt.plot(sfi, sfp)
+        for j in range(self.param['nb_joints']):
+            plt.plot(sfi, sfp[j])
         plt.show(block=False)
         
     def do_seq_export(self, line):
