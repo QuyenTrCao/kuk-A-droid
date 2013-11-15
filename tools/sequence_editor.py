@@ -189,7 +189,6 @@ def get_seq(kf):
     # Step2: create the if np arrays
     ifi = [np.array([])]
     for (kfis, kfie) in zip(kfi[:-1], kfi[1:]):
-        print kfis, kfie
         for i in range((int(kfis) + 1), int(kfie)):
             ifi = np.append(ifi, i)
     logging.debug('Interpolated frames array i: %s', ifi)
