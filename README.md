@@ -5,8 +5,9 @@ How to transform the KUKA youBot mobile manipulator into your buddy!
 
 ## News
 
-+ **We are looking for 3D graphics animator.** Check full details [here][4].
-+ The application form has been sent on time.
++ The application form has been sent on time and still no update from KUKA :(
++ The call for contribution of a [3D graphics animator][4] has found someone, and @lo-th is now part of the team, check this [impressive demo][5] in three.js
++ @nexuscomputing is also highly interested in contributing to the Android part of the project
 
 ## The big idea
 
@@ -56,6 +57,12 @@ GitHub is the meeting point of the community. The project just starts, so the co
 + https://github.com/Arn-O
 + https://twitter.com/A_rnO_
 
+**lo-th:**
++ https://github.com/lo-th
+
+**nexuscomputing:**
++ https://github.com/nexuscomputing
+
 ## Copyright and license
 
 Copyright 2013 Arn-O under [the MIT license][3].
@@ -64,3 +71,4 @@ Copyright 2013 Arn-O under [the MIT license][3].
 [2]: https://github.com/Arn-O/kuk-A-droid/wiki/Roadmap
 [3]: https://github.com/Arn-O/kuk-A-droid/blob/master/LICENSE
 [4]: https://github.com/Arn-O/kuk-A-droid/wiki/Call-for-contribution:-3D-graphics-animator
+[5]: http://arn-o.github.io/kuk-A-droid/demo/
