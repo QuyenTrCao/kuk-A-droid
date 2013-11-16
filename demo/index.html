@@ -89,6 +89,7 @@
 			// object3d
 			var youbot;
 			var content;
+			var materials = [];
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger;
@@ -237,7 +238,7 @@
 				}
 
 				// material
-				var materials = [];
+				
 				var shine = 10;
 				var specular = 0x606060;
 				materials[0] = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
@@ -561,22 +562,50 @@
 			var vBones = [];
 
 			function showBones() {
-				for(var i = 1;i!==5;i++ ){
-					vBones[i] = visibleBones();
-				}
-				arm_joint_1.add(vBones[1]);
-				arm_joint_2.add(vBones[2]);
-				arm_joint_3.add(vBones[3]);
-				arm_joint_4.add(vBones[4]);
-				arm_joint_5.add(vBones[5]);
-				//youbotBones
+				var i;
+				if(vBones.length>0){
+					arm_joint_1.remove(vBones[1]);
+					arm_joint_2.remove(vBones[2]);
+					arm_joint_3.remove(vBones[3]);
+					arm_joint_4.remove(vBones[4]);
+					arm_joint_5.remove(vBones[5]);
+					for ( i = vBones.length - 1; i >= 1 ; i -- ) {
+						vBones[i].remove(vBones[i].children[0]);
+						vBones[i].remove(vBones[i].children[1]);
+						vBones.pop();
+					}
+					vBones = [];
+					for(i = 0; i!== materials.length; i++){
+						materials[i].transparent = false;
+						materials[i].opacity = 1;
+					}
+				}else{
+					for( i = 1;i!==6;i++ ){
+						vBones[i] = visibleBones(i);
+					}
+					arm_joint_1.add(vBones[1]);
+					arm_joint_2.add(vBones[2]);
+					arm_joint_3.add(vBones[3]);
+					arm_joint_4.add(vBones[4]);
+					arm_joint_5.add(vBones[5]);
+					for(i = 0; i!== materials.length; i++){
+						materials[i].transparent = true;
+						materials[i].opacity = 0.5;
+					}
+			    }
 			}
 
-			function visibleBones(link, p1, p2){
+			function visibleBones(n){
 				var bone = new THREE.Object3D();
 				bone.add(new THREE.AxisHelper( 10 ));
+				if(n===1)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 10 ));
+				else if(n===2)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 15 ));
+				else if(n===3)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 13.5 ));
+				else if(n===4)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 11.5 ));
+				else if(n===5)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 6 ));
+				//else if(n<3)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 20 ));
+				//else bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 20 ));
 				return bone;
-
 			}
 
 			//-----------------------------------------------------
@@ -584,7 +613,7 @@
 			//-----------------------------------------------------
 
 			var jointConfig = { joint_1:0, joint_2:90, joint_3:90, joint_4:0, joint_5:0, finger:0 };
-			var options = {physics:false};
+			var options = {physics:false, showBones:false};
 
 			function addGUI() {
 				gui = new dat.GUI();
@@ -599,6 +628,7 @@
 
 				var f1 = gui.addFolder('OPTION');
 				f1.add( options, 'physics' ).onChange( function() { startPhysics() });
+				f1.add( options, 'showBones' ).onChange( function() { showBones() });
 
 				f1.open();
 			}
