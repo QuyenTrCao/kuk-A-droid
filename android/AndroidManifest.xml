@@ -23,13 +23,20 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
+                android:resource="@xml/accessory_filter" />
         </activity>
 
         <service
             android:name="android.kuk_a_droid.accessory_service.AccessoryService"
-            android:process=".accessory_service"
             android:enabled="true"
-            android:exported="false" >
+            android:exported="false"
+            android:process=".accessory_service" >
         </service>
     </application>
 

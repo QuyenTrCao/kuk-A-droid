@@ -24,11 +24,14 @@ public final class AccessoryEngine {
 	public static final int ERROR_DEVICE_NOT_FOUND = -4;
 	public static final int ERROR_WRITER_ALREADY_STARTED = -5;
 	public static final int ERROR_WRITER_TASK_ABORTED = -6;
+	public static final int ERROR_READER_TASK_ABORTED = -7;
 
 	protected interface IAccessoryEngineCallback {
 		void onNewData(byte[] data);
 
 		void onError(int errorCode);
+		
+		void onAccessoryConnect();
 	}
 
 	public AccessoryEngine(Context context, IAccessoryEngineCallback callback) {
@@ -89,7 +92,7 @@ public final class AccessoryEngine {
 				.openAccessory(accessory);
 		FileInputStream inputStream = new FileInputStream(
 				parcelDescriptor.getFileDescriptor());
-		FileOutputStream mOutputStream = new FileOutputStream(
+		mOutputStream = new FileOutputStream(
 				parcelDescriptor.getFileDescriptor());
 
 		if (sWriterThread == null) {
@@ -101,6 +104,10 @@ public final class AccessoryEngine {
 			mCallback.onError(ERROR_WRITER_ALREADY_STARTED);
 		}
 
+		mCallback.onAccessoryConnect();
+		
+		send("hello!".getBytes());
+		
 		try {
 			for (;;) {
 				int len = inputStream.read(mBuffer.array());
@@ -109,7 +116,9 @@ public final class AccessoryEngine {
 				mCallback.onNewData(mBuffer.slice().array());
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
 			L.e("ioexecption in accessory engine thread");
+			mCallback.onError(ERROR_READER_TASK_ABORTED);
 		}
 
 		inputStream.close();
@@ -130,7 +139,9 @@ public final class AccessoryEngine {
 			try {
 				writerTask();
 			} catch (Exception e) {
+				e.printStackTrace();
 				L.e("error during writer task");
+				mCallback.onError(ERROR_WRITER_TASK_ABORTED);
 			}
 			sWriterThread = null;
 		}
@@ -140,6 +151,11 @@ public final class AccessoryEngine {
 		for (;;) {
 			mWriterLock.lock();
 			mWriterCondition.await();
+			if(mOutputStream == null){
+				L.e("outputstream is null");
+				mWriterLock.unlock();
+				continue;
+			}
 			int pos = mWriterBuffer.position();
 			mWriterBuffer.position(0);
 			mWriterBuffer.get(mWriterData, 0, pos);
