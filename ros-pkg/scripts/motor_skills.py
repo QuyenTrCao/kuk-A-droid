@@ -19,7 +19,7 @@ import rospy
 # ROS constants
 NODE_NAME = 'motor_skills'
 TOPIC_JOINT_STATES = '~joint_states'
-DEFAULT_FREQUENCY = 25
+DEFAULT_FREQUENCY = 60
 JOINT_NAME_ARRAY = ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'finger_left_joint', 'finger_right_joint']
 
 # affective constants
