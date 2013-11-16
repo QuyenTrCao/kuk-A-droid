@@ -77,11 +77,20 @@ def is_frame0(kf):
     else:
         logging.debug('Frame0 is defined')
 
+def is_jnames_defined(obj):
+    '''Check if the number of joints is consistent with the joints names'''
+    logging.debug('Call function is_jnames_defined()')
+    if len(obj.param['jnames']) == obj.param['nb_joints']:
+        logging.debug('Joints names defined')
+        return True
+    else:
+        logging.warning('Joints names not defined')
+        return False
+
 # parse functions
 def parse_kframe_add(line):
     '''Parse the input for the add keyframe function'''
     logging.debug('Call function parse_kframe_add()')   
-    # TODO: add some checks here (no value for example or existing frame)
     return int(line)
 
 def parse_kframe_open(line):
@@ -108,6 +117,16 @@ def set_work_name(obj, val):
     logging.debug('Call function set_work_name()')
     obj.param['wname'] = val 
 
+def set_jnames(obj, val):
+    '''Set the names of the joints'''
+    logging.debug('Call function set_jnames()')
+    jnames = []
+    for j in range(obj.param['nb_joints']):
+        jname = raw_input('Enter name for joint %i: ' % j)
+        jnames.append(jname)
+    logging.debug('Joints new names: ', jnames)
+    obj.param['jnames'] = jnames #[jname for jname in jnames]
+
 def parse_param_set(line):
     '''Parse the input for the set parameter function'''
     logging.debug('Call function parse_param_set()')
@@ -115,11 +134,14 @@ def parse_param_set(line):
     param_to_fcts = {
         'nb_joints': set_nb_joints,
         'freq': set_freq,
-        'work_name': set_work_name
+        'work_name': set_work_name,
+        'jnames': set_jnames
     }
     if args[0] in param_to_fcts:
         fct = param_to_fcts[args[0]]
-        val = args[1]
+        val = None
+        if len(args) > 1:
+            val = args[1]
         return (fct, val)
     else:
         logging.warning('Parameter not found')
@@ -148,7 +170,6 @@ def bezier_curve(p0, p1, p2, p3):
     (x3, y3) = p3
     # calculate terms of the interpolation
     t = np.linspace(0, 1, 1000)
-    # TODO: define the best linspace step
     # Check if this could be done directly on the tuples
     # Not a big deal, since it should be converted to array anyway
     xterm0 = (1 - t) * (1 - t) * (1 - t) * x0
@@ -233,7 +254,7 @@ class SequenceEditor(cmd.Cmd):
                 'freq': DEF_FREQ,
                 'nb_joints': DEF_NB_JOINTS,
                 'wname': DEF_WNAME,
-                'jnames': ['grip1'],
+                'jnames': ['joint1'],
             }
         self.kf = []        
         print("'Crtl+D' or EOF to quit")
@@ -245,7 +266,10 @@ class SequenceEditor(cmd.Cmd):
         print('Frequency: %i' % self.param['freq'])
         print('Number of joint(s): %i' % self.param['nb_joints'])
         print('Work name: %s' % self.param['wname'])
+        print('Joint(s) name(s): %s' % self.param['jnames'])
+        logging.debug('Raw display of the parameters: %s', self.param)
         is_frame0(self.kf)
+        is_jnames_defined(self)
 
     def do_param_set(self, line):
         '''Set the number of joints'''
@@ -253,6 +277,7 @@ class SequenceEditor(cmd.Cmd):
         if action:
             action(self, val)
         is_frame0(self.kf)
+        is_jnames_defined(self)
 
     def do_kframe_disp(self, line):
         '''Display the keyframes'''
@@ -285,7 +310,8 @@ class SequenceEditor(cmd.Cmd):
         pickle.dump(data, f)
         f.close()
         is_frame0(self.kf)
-        
+        is_jnames_defined(self)
+
     def do_kframe_open(self, line):
         '''Open a key frames file'''
         # TODO: load parameter from the dump (see above)
@@ -301,7 +327,8 @@ class SequenceEditor(cmd.Cmd):
             logging.debug('Key frames loaded: %s', self.kf)
             print('Use kframe_disp to check the content')
         is_frame0(self.kf)
-                
+        is_jnames_defined(self)
+
     def do_seq_disp(self, line):
         '''Display the sequence of motion with interpolation'''
         logging.debug('Call function seq_disp()')
@@ -310,7 +337,6 @@ class SequenceEditor(cmd.Cmd):
         print sfi
         print sfp
         print sft
-        # TODO: improve display
 
     def do_seq_plot(self, line):
         '''Plot the full sequence including the interpolated frames'''
@@ -318,19 +344,28 @@ class SequenceEditor(cmd.Cmd):
         if not can_gen_seq(self.kf): return
         (sfi, sfp, sft) = get_seq(self.kf)
         for j in range(self.param['nb_joints']):
-            plt.plot(sfi, sfp[j])
+            if is_jnames_defined(self):
+                label_text = self.param['jnames'][j]
+            else:
+                label_text = 'no name'
+            plt.plot(sfi, sfp[j], label=label_text)
+        plt.legend()
         plt.show(block=False)
         
     def do_seq_export(self, line):
         '''Export the full sequence including the interpolated frames'''
         logging.debug('Call function seq_export()')
         if not can_gen_seq(self.kf): return
+        if not is_jnames_defined(self): return
         (sfi, sfp, sft) = get_seq(self.kf)
-        export = {self.jnames[0]: {} } 
-        for fi in sfi:
-            export[self.jnames[0]][int(fi)] = round(sfp[fi],3)
-        f = open('sequence.txt', 'w')
-        f.write(json.dumps(export))
+        ex = {}
+        for j in range(self.param['nb_joints']):
+            ex[self.param['jnames'][j]] = {}
+            for fi in sfi:
+                ex[self.param['jnames'][j]][int(fi)] = round(sfp[j][int(fi)], 3)
+        fname = self.param['wname'] + '_seq.txt'
+        f = open(fname, 'w')
+        f.write(json.dumps(ex))
         f.close()
 
     def do_EOF(self, line):
