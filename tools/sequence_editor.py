@@ -24,7 +24,7 @@ DEF_FREQ = 60
 DEF_NB_JOINTS = 1
 DEF_WNAME = 'new_work'
 
-
+# getters
 def get_parameters():
     '''Manage the execution parameters'''        
     # get input parameters
@@ -48,11 +48,11 @@ def get_fnums(kf):
     logging.debug('Frames numbers: %s', fnums)   
     return fnums
 
-def get_jposes(kf):
-    '''Return an array with the arrays poses'''     
-    logging.debug('Call function get_jposes()')
-    jposes = [jposes for (fnum, jposes) in kf]
-    return jposes    
+#def get_jposes(kf):
+#    '''Return an array with the arrays poses'''     
+#    logging.debug('Call function get_jposes()')
+#    jposes = [jposes for (fnum, jposes) in kf]
+#    return jposes    
  
 def get_coord(frame, i):
     '''Return point coordinates from frames'''
@@ -60,7 +60,8 @@ def get_coord(frame, i):
     (x, poses) = frame
     y = poses[i]
     return (x, y)
-    
+
+# utility functions
 def sort_kframes(kf):
     '''Sort the keyframes in place'''
     logging.debug('Call function sort_kframes()')
@@ -87,7 +88,17 @@ def is_jnames_defined(obj):
         logging.warning('Joints names not defined')
         return False
 
-# parse functions
+def can_gen_seq(kf):
+    '''Check if the sequence can be generated'''
+    logging.debug('Call function can_gen_seq()')
+    fnums = get_fnums(kf)
+    if len(fnums) < 2:
+        logging.warning('Not enough keyframes, at least two required')
+        return False
+    else:
+        return True
+    
+# cmd command parse functions
 def parse_kframe_add(line):
     '''Parse the input for the add keyframe function'''
     logging.debug('Call function parse_kframe_add()')   
@@ -149,16 +160,7 @@ def parse_param_set(line):
         print('Available parameters: %s ' % param_to_fcts.keys())
         return None, None
 
-def can_gen_seq(kf):
-    '''Check if the sequence can be generated'''
-    logging.debug('Call function can_gen_seq()')
-    fnums = get_fnums(kf)
-    if len(fnums) < 2:
-        logging.warning('Not enough keyframes, at least two required')
-        return False
-    else:
-        return True
-    
+# calculate interpolated frames using Bezier curve
 def bezier_curve(p0, p1, p2, p3):
     '''Return the interpolated values using a cubic Bezier curve'''
     logging.debug('Call function bezier_curve()')      
@@ -241,7 +243,6 @@ def get_seq(kf):
     logging.debug('Sequence frames array t: %s', sft)
     return sfi, sfp, sft
 
-# TODO: manage the is_frame0() check in a postcmd method
 class SequenceEditor(cmd.Cmd):
 
     '''Subclass of the cmd class'''
@@ -314,7 +315,6 @@ class SequenceEditor(cmd.Cmd):
 
     def do_kframe_open(self, line):
         '''Open a key frames file'''
-        # TODO: load parameter from the dump (see above)
         logging.debug('Call function do_kframe_open()')
         fname = parse_kframe_open(line)
         if fname:
