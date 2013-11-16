@@ -458,7 +458,11 @@
             	    		mesh = content.children[i];
             	    		if( e.data.sleeps[i]==0 ){
             	    			n = 12*i;
-	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3], m[n+4], m[n+5], m[n+6], m[n+7], m[n+8], m[n+9], m[n+10], m[n+11], 0, 0, 0, 1);
+	            	    		mtx = new THREE.Matrix4(
+	            	    			m[n+0], m[n+1], m[n+2], m[n+3], 
+	            	    			m[n+4], m[n+5], m[n+6], m[n+7],
+	            	    			m[n+8], m[n+9], m[n+10], m[n+11],
+	            	    			0, 0, 0, 1);
 	            	    		mesh.position.getPositionFromMatrix( mtx );
 						    	mesh.rotation.setFromRotationMatrix( mtx );
 						    }
@@ -478,12 +482,23 @@
 			    for(var i=0; i!==max; i++){
 			    	s = data.sizes[i] || [50,50,50];
 			    	switch(data.types[i]){
-			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set( s[0], s[0], -s[0] ); break; // sphere
-			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set( s[0], s[1],-s[2] ); break; // box
-			    		case 3: mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set( s[0], s[1],-s[2] );  mesh.visible = true; break; // droid
-			    		case 4: mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_r, mat03); mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
-			    		case 5: mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_l, mat03); mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
-			    		case 6: mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set( s[0], s[1],-s[2] );  mesh.visible = true; break; // droid
+			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set(s[0],s[0],-s[0]); break; // sphere
+			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set(s[0],s[1],-s[2]); break; // box
+			    		case 3: 
+			    		    mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set(s[0],s[1],-s[2]);
+			    		    mesh.visible = true; break; // droid
+			    		case 4: 
+			    		    mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_r, mat03);
+			    		    mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 5: 
+			    		    mesh = new THREE.Object3D(); 
+			    		    mesh2=new THREE.Mesh(wheel_geo_l, mat03); 
+			    		    mesh.add(mesh2); 
+			    		    mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 6: 
+			    		    mesh=new THREE.Mesh(geo01, mat02);
+			    		    mesh.scale.set(s[0],s[1],-s[2]);  
+			    		    mesh.visible = true; break; // droid
 			    	}
 			    	if(data.types[i]===2){
 			    		mesh.receiveShadow = true;
@@ -579,7 +594,7 @@
 				f0.add( jointConfig, 'joint_3', -45, 225 ).listen().onChange( function() { arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad; });
 				f0.add( jointConfig, 'joint_4', -110, 110 ).listen().onChange( function() { arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad; });
 				f0.add( jointConfig, 'joint_5', 0, 360 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; });
-				f0.add( jointConfig, 'finger', 0, 2 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; });
+				f0.add( jointConfig, 'finger', 0, 3 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; });
 				f0.open();
 
 				var f1 = gui.addFolder('OPTION');
@@ -594,7 +609,7 @@
 
 			function addAnimation() {
 				TweenLite.to(jointConfig, 3, {joint_2: 0, joint_3: 180, joint_4:-110, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
-				TweenLite.to(jointConfig, 0.5, {joint_5:180, finger:2, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
+				TweenLite.to(jointConfig, 0.5, {joint_5:180, finger:3, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
 				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate, onComplete: animationEnd });
 			}
 
