@@ -67,6 +67,7 @@
 		<div id="loading" class="unselectable"><img src="webdemo/assets/ajax-loader.gif" alt="Loading youbot robot"></div>
 
 		<script src="webdemo/js/three.min.js"></script>
+		<script src="webdemo/js/Detector.js"></script>
 		<script src="webdemo/js/CameraLoth.js"></script>
 		<script src='webdemo/js/stats.min.js'></script>
 		<script src='webdemo/js/dat.gui.min.js'></script>
@@ -91,6 +92,8 @@
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger;
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			window.onload = init;
 			
