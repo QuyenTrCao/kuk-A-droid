@@ -1,6 +1,7 @@
 package android.kuk_a_droid.accessory_service;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -61,10 +62,19 @@ public final class AccessoryService extends Service {
 			
 			mEngine.start();
 			
+			if(mEngine.isOngoing()){
+				mResultReceiver.send(RESULT_KUKA_CONNECTED, mData);
+			}
+			
 			mHandler.removeMessages(MSG_SEND_DATA);
 			mHandler.sendEmptyMessage(MSG_SEND_DATA);
 		} else if (ACTION_STOP_SERVICE.equals(intent.getAction())) {
 			L.d("action stop");
+			if(mEngine != null){
+				if(mEngine.isOngoing())
+					return;
+			}
+			
 			stopForeground(true);
 			stopSelf();
 			System.exit(0);

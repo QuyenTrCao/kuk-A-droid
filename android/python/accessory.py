@@ -150,7 +150,7 @@ def accessory_task(vid):
     length = -1
     while True:
         try:
-            data = ep_in.read(size = 512, timeout = 1000)
+            data = ep_in.read(size = 512)
             print("read value %d" % data[0])
         except usb.core.USBError, e:
             print("failed to send IN transfer %s" % e)
@@ -162,7 +162,7 @@ def accessory_task(vid):
 def writer (ep_out):
     while True:
         try:
-            length = ep_out.write([0], timeout = 1000)
+            length = ep_out.write([0])
             print("%d bytes written" % length)
             time.sleep(0.5)
         except usb.core.USBError, e:

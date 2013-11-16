@@ -77,13 +77,14 @@ public final class MainActivity extends Activity {
 
 	private void handleIntent(Intent intent) {
 		L.d("handling intent");
-		if (intent.hasExtra(UsbManager.EXTRA_ACCESSORY)) {
-			connectAccessory();
-		}
-		
-		if(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)){
-			connectAccessory();
-		}
+		connectAccessory();
+
+//		if (intent.hasExtra(UsbManager.EXTRA_ACCESSORY)) {
+//		}
+//		
+//		if(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)){
+//			connectAccessory();
+//		}
 	}
 
 	private void onHandleResult(int resultCode, Bundle resultData) {
