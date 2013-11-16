@@ -5,7 +5,7 @@
  * 	http://code.google.com/p/sea3d/
  */
 
-var SEA3D = { VERSION : 16002, REVISION : 2 }
+var SEA3D = { VERSION : 16004, REVISION : 1 }
 
 //
 //	Timer

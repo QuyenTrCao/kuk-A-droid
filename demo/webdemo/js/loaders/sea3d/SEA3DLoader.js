@@ -1,5 +1,5 @@
 /**
- * 	SEA3D.js + three.js
+ * 	SEA3D.js + Three.js
  * 	Copyright (C) 2013 Sunag Entertainment 
  * 
  * 	http://code.google.com/p/sea3d/
@@ -61,7 +61,7 @@ THREE.Mesh.prototype.dispose = function () {
 
 THREE.Mesh.prototype.CLONE = THREE.Mesh.prototype.clone;
 THREE.Mesh.prototype.clone = function ( object ) {
-	var obj = this.CLONE( object );
+	var obj = THREE.Mesh.prototype.CLONE.call( this, object );
 	
 	if (obj.animation)
 		obj.animation = this.animation.clone( obj );
@@ -125,7 +125,7 @@ THREE.SkinnedMesh.prototype.dispose = function () {
 
 THREE.SkinnedMesh.prototype.CLONE = THREE.SkinnedMesh.prototype.clone;
 THREE.SkinnedMesh.prototype.clone = function ( object ) {
-	var obj = this.CLONE( object );
+	var obj = THREE.SkinnedMesh.prototype.CLONE.call( this, object );
 	
 	obj.animations = [];
 	
@@ -1120,7 +1120,12 @@ THREE.SEA3D.prototype.onError = function(  ) {
 //
 
 THREE.SEA3D.prototype.load = function( url ) {			
-	this.file = new SEA3D.File();
+	this.loadBytes();
+	this.file.load(url);		
+}
+
+THREE.SEA3D.prototype.loadBytes = function( data ) {			
+	this.file = new SEA3D.File( data );
 	this.file.scope = this;
 	this.file.onComplete = this.onComplete;
 	this.file.onProgress = this.onProgress;
@@ -1147,5 +1152,5 @@ THREE.SEA3D.prototype.load = function( url ) {
 	this.file.typeRead[SEA3D.PNG.prototype.type] = this.readImage;	
 	this.file.typeRead[SEA3D.GIF.prototype.type] = this.readImage;	
 	
-	this.file.load(url);		
+	if (data) this.file.read();	
 }

@@ -123,7 +123,7 @@
 				scene.add( pointLight );
 
 				sunLight = new THREE.DirectionalLight( 0xe6f3ff );
-				sunLight.intensity = 1;
+				sunLight.intensity = 1.3;
 				sunLight.castShadow = true;
 
 				sunLight.shadowCameraNear = 100;
@@ -375,7 +375,7 @@
 				sunLight.position.set(youbot.position.x+120, 200, youbot.position.z+100);
 				sunLight.target.position.set(youbot.position.x, 0, youbot.position.z );
 
-				if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
+				//if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
 			}
 
 			//-----------------------------------------------------
@@ -412,6 +412,7 @@
 			//-----------------------------------------------------
 			//  PHYSICS
 			//-----------------------------------------------------
+
 			var OimoWorker;
 			var isPhysicsOn = false;
 
@@ -419,7 +420,8 @@
 			var geo02 = new THREE.SphereGeometry( 1, 6, 4);
 			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );
 			var mat02 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff, transparent:true, opacity:0.1 } );
-			var mat03 = new THREE.MeshBasicMaterial( { color: 0xffaa00, wireframe: true } );
+			var mat03 = new THREE.MeshPhongMaterial( { color: 0x303030, shininess:20, specular:0xffffff } );
+			//var mat03 = new THREE.MeshBasicMaterial( { color: 0xffaa00, wireframe: true } );
 
 			function startPhysics () {
         	    if(!isPhysicsOn){
@@ -453,7 +455,7 @@
             	    		mesh = content.children[i];
             	    		if( e.data.sleeps[i]==0 ){
             	    			n = 12*i;
-	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3]*10, m[n+4], m[n+5], m[n+6], m[n+7]*10, m[n+8], m[n+9], m[n+10], m[n+11]*10, 0, 0, 0, 1);
+	            	    		mtx = new THREE.Matrix4(m[n+0], m[n+1], m[n+2], m[n+3], m[n+4], m[n+5], m[n+6], m[n+7], m[n+8], m[n+9], m[n+10], m[n+11], 0, 0, 0, 1);
 	            	    		mesh.position.getPositionFromMatrix( mtx );
 						    	mesh.rotation.setFromRotationMatrix( mtx );
 						    }
@@ -468,6 +470,7 @@
     	    	var boneindex=0;
     	    	var max = data.types.length;
     	    	var mesh;
+    	    	var mesh2;
     	    	var s;
 			    for(var i=0; i!==max; i++){
 			    	s = data.sizes[i] || [50,50,50];
@@ -475,8 +478,11 @@
 			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set( s[0], s[0], -s[0] ); break; // sphere
 			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set( s[0], s[1],-s[2] ); break; // box
 			    		case 3: mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set( s[0], s[1],-s[2] );  mesh.visible = true; break; // droid
+			    		case 4: mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_r, mat03); mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 5: mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_l, mat03); mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 6: mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set( s[0], s[1],-s[2] );  mesh.visible = true; break; // droid
 			    	}
-			    	if(data.types[i]!==3){
+			    	if(data.types[i]===2){
 			    		mesh.receiveShadow = true;
 			    		mesh.castShadow = true;
 			    	}
@@ -485,9 +491,10 @@
     	    }
 
     	    function clearContent(){
-    	    	var obj, i;
+    	    	var obj, i, j;
 			    for ( i = content.children.length - 1; i >= 0 ; i -- ) {
-						obj = content.children[ i ];
+			    	    obj = content.children[ i ];
+			    	    if(obj.children.length > 0) for ( j = obj.children.length - 1; j >= 0 ; j -- ) {obj.remove(obj.children[j]);}
 						content.remove(obj);
 				}
 				isPhysicsOn = false;
