@@ -3,6 +3,8 @@ package android.kuk_a_droid.accessory_service;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,6 +13,7 @@ import android.content.Context;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.kuk_a_droid.log.L;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 
 public final class AccessoryEngine {
@@ -72,6 +75,8 @@ public final class AccessoryEngine {
 	private static final int BUFFER_SIZE = 10 * 1024;
 	private final ByteBuffer mBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 	private FileOutputStream mOutputStream = null;
+	private ParcelFileDescriptor mParcelDescriptor;
+	
 
 	private void engineTask() throws Exception {
 		final UsbManager usbman = (UsbManager) mContext
@@ -88,12 +93,16 @@ public final class AccessoryEngine {
 			return;
 		}
 
-		final ParcelFileDescriptor parcelDescriptor = usbman
-				.openAccessory(accessory);
+		
+		mParcelDescriptor = usbman.openAccessory(accessory);
+		if(mParcelDescriptor == null){
+			L.e("could not open parcel file descriptor");
+		}
+		
 		FileInputStream inputStream = new FileInputStream(
-				parcelDescriptor.getFileDescriptor());
+				mParcelDescriptor.getFileDescriptor());
 		mOutputStream = new FileOutputStream(
-				parcelDescriptor.getFileDescriptor());
+				mParcelDescriptor.getFileDescriptor());
 
 		if (sWriterThread == null) {
 			sWriterThread = new Thread(mWriterRunnable,
@@ -105,8 +114,6 @@ public final class AccessoryEngine {
 		}
 
 		mCallback.onAccessoryConnect();
-		
-		send("hello!".getBytes());
 		
 		try {
 			for (;;) {
@@ -163,6 +170,11 @@ public final class AccessoryEngine {
 
 			mOutputStream.write(mWriterData, 0, pos);
 		}
+	}
+	
+	public boolean isOngoing(){
+		if(sWriterThread != null) return true;
+		return false;	
 	}
 
 }
