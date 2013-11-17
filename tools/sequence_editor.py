@@ -362,7 +362,7 @@ class SequenceEditor(cmd.Cmd):
         for j in range(self.param['nb_joints']):
             ex[self.param['jnames'][j]] = {}
             for fi in sfi:
-                ex[self.param['jnames'][j]][int(fi)] = round(sfp[j][int(fi)], 3)
+                ex[self.param['jnames'][j]][int(fi)] = round(sfp[j][int(fi)], 4)
         fname = self.param['wname'] + '_seq.txt'
         f = open(fname, 'w')
         f.write(json.dumps(ex))
