@@ -11,7 +11,7 @@
 		<style>
 			body {
 				font-family: 'Trebuchet MS', Geneva, sans-serif;
-				background-color: #2d2d2d;
+				background-color: #4D4D4D;
 				overflow: hidden;
 				font-size: 11px;
 				height: 100%;
@@ -47,6 +47,9 @@
 			    -khtml-user-select: none;
 			    -webkit-user-select: none;
 			}
+			#stats #fps { background: transparent !important }
+			#stats #fps #fpsText { color: #888 !important }
+			#stats #fps #fpsGraph { display: none }
 		</style>
 		<script>
 		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -77,16 +80,25 @@
 		<script src="webdemo/js/loaders/sea3d/SEA3DLoader.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DDeflate.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DLZMA.js"></script>
+
+		<script src="webdemo/js/effects/CopyShader.js"></script>
+		<script src="webdemo/js/effects/EffectComposer.js"></script>
+		<script src="webdemo/js/effects/ShaderPass.js"></script>
+		<script src="webdemo/js/effects/RenderPass.js"></script>
+		<script src="webdemo/js/effects/MaskPass.js"></script> 
+		<script src="webdemo/js/effects/sketch.js"></script> 
 		
 		<script>
 		    var AssetsFolder = "webdemo/assets/";
 		    var ToRad = Math.PI / 180;
 			var container, info, gui;
-			var scene, renderer, camera, clock, delta, sunLight, cam;
+			var scene, renderer, camera, clock, delta, cam;
+			var sunLight, pointLight, ambient;
 			var stats;
 			// geometry
 			var wheel_geo_r, wheel_geo_l;
 			// object3d
+			var plane, matGround;
 			var youbot;
 			var content;
 			var materials = [];
@@ -112,16 +124,10 @@
 				camera.scale.set(-1, 1, 1);
 
 				// Lights and shadow
-				var ambient = new THREE.AmbientLight( 0x505050);
-				scene.add( ambient );												
-				
-				/*var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.3 );
-				hemiLight.color.setHex( 0xfeffe6 );
-				hemiLight.groundColor.setHex( 0x303030 );
-				hemiLight.position.set( 0, 500, 0 );
-				scene.add( hemiLight );*/
+				ambient = new THREE.AmbientLight( 0x505050);
+				scene.add( ambient );
 
-				var pointLight = new THREE.PointLight( 0xfeffe6, 1.5, 2000 );
+				pointLight = new THREE.PointLight( 0xfeffe6, 1.5, 2000 );
 				pointLight.color.setHSL( 0.05, 1, 0.95 );
 				pointLight.position.set( 0, 50, 600 );
 				scene.add( pointLight );
@@ -134,7 +140,7 @@
 				sunLight.shadowCameraFar = 500;
 				
 				sunLight.shadowMapBias = 0.01;
-				sunLight.shadowMapDarkness = 0.3;
+				sunLight.shadowMapDarkness = 0.5;
 				sunLight.shadowMapWidth =1024;
 				sunLight.shadowMapHeight =1024;
 
@@ -154,7 +160,7 @@
 				renderer.shadowMapSoft = true;
 				renderer.gammaOutput = true;
 				renderer.gammaInput = true;
-				renderer.setClearColor( 0x2d2d2d, 1 );
+				renderer.setClearColor( 0x4D4D4D, 1 );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
 				
@@ -165,8 +171,10 @@
 				var groundMap = new THREE.ImageUtils.loadTexture( AssetsFolder + "ground.jpg" );
 				groundMap.repeat.set( 2000, 2000 );
 				groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
-				var matGround = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x606060 } );
-				var plane = new THREE.Mesh( geometry, matGround );
+				matGround = new THREE.MeshPhongMaterial( { map:groundMap , shininess:20, specular:0x606060 } );
+				matGround.transparent = true;
+				matGround.opacity = 0.3;
+				plane = new THREE.Mesh( geometry, matGround );
 				plane.rotation.x = 90*ToRad;
 				plane.receiveShadow = true;
 				plane.castShadow = false;
@@ -192,7 +200,7 @@
 				stats = new Stats();
 				stats.domElement.style.position	= 'absolute';
 				stats.domElement.style.right	= '10px';
-				stats.domElement.style.bottom	= '10px';
+				stats.domElement.style.bottom	= '6px';
 				document.body.appendChild( stats.domElement );
 			}
 
@@ -250,6 +258,8 @@
 				materials[6] = new THREE.MeshPhongMaterial( { map: textures[6], shininess:shine, specular:specular } );
 				materials[7] = new THREE.MeshPhongMaterial( { map: textures[7], shininess:shine, specular:specular } );
 				materials[8] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
+				materials[9] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
+
 
 				// apply material
 				base.material = materials[1];
@@ -260,8 +270,8 @@
 				arm_joint_3.material = materials[6];
 				arm_joint_4.material = materials[7];
 				arm_joint_5.material = materials[8];
-				right_finger.material = materials[8];
-				left_finger.material = materials[8];
+				right_finger.material = materials[9];
+				left_finger.material = materials[9];
 
 				// add root model
 				youbot.add( base );
@@ -341,11 +351,6 @@
 				controls.tz = Math.cos( controls.rotation+90*ToRad ) * sideDelta;
 
 				youbot.rotation.y = controls.rotation - 90*ToRad;
-				//youbot.position.x += controls.vx;
-				//youbot.position.z += controls.vz;
-
-				//youbot.position.x += controls.tx;
-				//youbot.position.z += controls.tz;
 
 				youbot.position.x += controls.vx+controls.tx;
 				youbot.position.z += controls.vz+controls.tz;
@@ -376,8 +381,10 @@
 
 				// camera and sun follow
 				if(!camPos.automove)cameraFollow(youbot.position);
-				sunLight.position.set(youbot.position.x+120, 200, youbot.position.z+100);
-				sunLight.target.position.set(youbot.position.x, 0, youbot.position.z );
+				if(sunLight){
+					sunLight.position.set(youbot.position.x+120, 200, youbot.position.z+100);
+					sunLight.target.position.set(youbot.position.x, 0, youbot.position.z );
+				}
 
 				//if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
 			}
@@ -390,6 +397,12 @@
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				if(isSketch){
+					composer.setSize(window.innerWidth,window.innerHeight);
+					pass.uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
+					colorBuffer=new THREE.WebGLRenderTarget(window.innerWidth,window.innerHeight,parameters);
+			    }
 			}
 
 			function animate() {
@@ -401,7 +414,12 @@
 
 			function render(delta) {
 				moveRobot(delta);
-				renderer.render( scene, camera );
+				if(!isSketch) renderer.render( scene, camera );
+				else {
+					renderer.render(scene,camera,colorBuffer);
+					pass.uniforms.tColor.value=colorBuffer;
+					composer.render();
+			    }
 				stats.update();
 			}
 
@@ -425,7 +443,6 @@
 			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );
 			var mat02 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff, transparent:true, opacity:0.1 } );
 			var mat03 = new THREE.MeshPhongMaterial( { color: 0x303030, shininess:20, specular:0xffffff } );
-			//var mat03 = new THREE.MeshBasicMaterial( { color: 0xffaa00, wireframe: true } );
 
 			function startPhysics () {
         	    if(!isPhysicsOn){
@@ -597,7 +614,7 @@
 
 			function visibleBones(n){
 				var bone = new THREE.Object3D();
-				bone.add(new THREE.AxisHelper( 10 ));
+				bone.add(new THREE.AxisHelper( 2 ));
 				if(n===1)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 10 ));
 				else if(n===2)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 15 ));
 				else if(n===3)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 13.5 ));
@@ -613,7 +630,7 @@
 			//-----------------------------------------------------
 
 			var jointConfig = { joint_1:0, joint_2:90, joint_3:90, joint_4:0, joint_5:0, finger:0 };
-			var options = {physics:false, showBones:false};
+			var options = {physics:false, showBones:false, sketchMode:false};
 			var emotions = {quiet:false, anger:false, frustration:false, fear:false, distress:false, disgust:false, sorrow:false, surprise:false, interest:false, boredom:false, joy:false};
 
 			function addGUI() {
@@ -630,7 +647,7 @@
 				var f1 = gui.addFolder('OPTION');
 				f1.add( options, 'physics' ).onChange( function() { startPhysics() });
 				f1.add( options, 'showBones' ).onChange( function() { showBones() });
-
+				f1.add( options, 'sketchMode' ).onChange( function() { showSketch() });
 				f1.open();
 
 				var f2 = gui.addFolder('EMOTIONS');
@@ -639,8 +656,71 @@
 			}
 
 			//-----------------------------------------------------
+			//  SKETCH MODE
+			//-----------------------------------------------------
+
+			var composer,pass,colorBuffer;
+			var parameters={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBFormat,stencilBuffer:false};
+			var isSketch = false;
+
+			function showSketch() {
+				if(options.sketchMode){
+					THREE.BlurShader={uniforms:{tDiffuse:{type:'t',value:null},delta:{ type:'v2',value:new THREE.Vector2(.01,.01)}},vertexShader:vs_downsample,fragmentShader:fs_downsample};
+					colorBuffer=new THREE.WebGLRenderTarget(1,1,parameters);
+					blurBuffer=new THREE.WebGLRenderTarget(1,1,parameters);
+
+					composer= new THREE.EffectComposer(renderer);
+					renderPass = new THREE.RenderPass( scene, camera );
+					composer.addPass(new THREE.RenderPass(scene,camera));
+					shader={uniforms:{tDiffuse:{type:'t',value:null},tColor:{ type:'t',value:null},tBlur:{type:'t',value:null},tNoise:{type:'t',value:THREE.ImageUtils.loadTexture('webdemo/assets/noise.png',null,function(){pass.uniforms.tNoise.value.needsUpdate=true;})},tPaper:{type:'t',value:THREE.ImageUtils.loadTexture('webdemo/assets/brown5.jpg',null,function(){pass.uniforms.tPaper.value.needsUpdate=true;})},resolution:{ type:'v2',value:new THREE.Vector2(1,1)}},vertexShader:vs_render,fragmentShader:fs_render}
+
+					pass=new THREE.ShaderPass(shader);
+					pass.renderToScreen=true;
+					composer.addPass(pass);
+
+					composer.setSize(window.innerWidth,window.innerHeight);
+					pass.uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
+					colorBuffer=new THREE.WebGLRenderTarget(window.innerWidth,window.innerHeight,parameters);
+
+					renderer.setClearColor(0xffffff);
+					matGround.emissive.setHex( 0xffffff );
+					matGround.opacity = 0.1;
+					ambient.color.setHex( 0x222222 );
+					sunLight.intensity = 0.8;
+					pointLight.intensity = 2;
+
+					for(var i = 0; i!== materials.length; i++){
+						if(i!==2 && i!==9){
+							materials[i].specular.setHex( 0xDDDDDD );
+							materials[i].emissive.setHex( 0xeeeeee );
+					    } else {
+					    	materials[i].specular.setHex( 0x111111 );
+					    }
+					}
+
+					isSketch = true;
+				} else {
+					matGround.emissive.setHex( 0x000000 );
+					matGround.opacity = 0.3;
+					ambient.color.setHex( 0x505050 );
+					sunLight.intensity = 1.3;
+					pointLight.intensity = 1.5;
+					for(var i = 0; i!== materials.length; i++){
+						if(i!==2 && i!==9){
+							materials[i].specular.setHex( 0x606060 );
+							materials[i].emissive.setHex( 0x000000 );
+					    }
+					}
+					renderer.setClearColor(0x4D4D4D);
+					isSketch = false;
+				}
+
+			}
+
+			//-----------------------------------------------------
 			//  ANIMATION TEST
 			//-----------------------------------------------------
+
 			var expTween;
 
 			function addAnimation() {
