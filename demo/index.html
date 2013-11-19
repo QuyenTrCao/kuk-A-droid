@@ -15,7 +15,7 @@
 				overflow: hidden;
 				font-size: 11px;
 				height: 100%;
-				color: #eee;
+				color: #9D9D9D;
 				margin: 0px;
 			}
 			#info {
@@ -75,6 +75,7 @@
 		<script src='webdemo/js/stats.min.js'></script>
 		<script src='webdemo/js/dat.gui.min.js'></script>
 		<script src="webdemo/js/tweenLite.min.js"></script>
+		<script src="webdemo/js/easing/EasePack.min.js"></script>
 		<script src="webdemo/js/BufferGeometryUtils.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3D.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DLoader.js"></script>
@@ -651,7 +652,8 @@
 				f1.open();
 
 				var f2 = gui.addFolder('EMOTIONS');
-				f2.add( emotions, 'quiet' ).onChange( function() { if(emotions.quiet)animationQuiet(); else emotionsStop(); }).listen();
+				f2.add( emotions, 'quiet' ).onChange( function() { emotionsStart(1); }).listen();
+				f2.add( emotions, 'anger' ).onChange( function() { emotionsStart(2); }).listen();
 				f2.open();
 			}
 
@@ -743,18 +745,35 @@
 
 			function emotionsStop() {
 				if(expTween) expTween.kill();
-				emotions.quiet=false;
+				if(emotions.quiet) emotions.quiet=false;
+				if(emotions.anger) emotions.anger=false;
+			}
+
+			function emotionsStart(N) {
+				emotionsStop();
+				var n = N || -1;
+				if(n===1){ animationQuiet(); emotions.quiet=true;}
+				else if(n===2){ animationAnger(); emotions.anger=true};
 			}
 
 			function emotionsLoop() {
 				if(expTween) expTween.restart();
 			}
 
-			function animationQuiet(b) {
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:0, joint_2: 0, joint_3: 180, joint_4:-110, joint_5:0,delay:0, onUpdate: animationUpdate });
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:0, joint_2: 10, joint_3: 170, joint_4:-120, joint_5:0,delay:1, onUpdate: animationUpdate, onComplete: animationQuiet });
+			//-----------------------------------------------------
+			//  EMOTIONS
+			//-----------------------------------------------------
+
+			function animationQuiet() {
+				var look = -20 + (Math.random()*40);
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look*0.5, joint_2: 0, joint_3: 180, joint_4:-110, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look, joint_2: 10, joint_3: 170, joint_4:-120, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationQuiet });
 			}
-	
+
+			function animationAnger() {
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: 0, joint_3: 180, joint_4:-110, joint_5:90, finger:3, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: 10, joint_3: 120, joint_4:-120, joint_5:0,  finger:0, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
+			}
 
 		</script>
 	</body>
