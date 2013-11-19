@@ -74,9 +74,8 @@
 		<script src="webdemo/js/CameraLoth.js"></script>
 		<script src='webdemo/js/stats.min.js'></script>
 		<script src='webdemo/js/dat.gui.min.js'></script>
-		<script src="webdemo/js/tweenLite.min.js"></script>
-		<script src="webdemo/js/easing/EasePack.min.js"></script>
 		<script src="webdemo/js/BufferGeometryUtils.js"></script>
+
 		<script src="webdemo/js/loaders/sea3d/SEA3D.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DLoader.js"></script>
 		<script src="webdemo/js/loaders/sea3d/SEA3DDeflate.js"></script>
@@ -87,11 +86,16 @@
 		<script src="webdemo/js/effects/ShaderPass.js"></script>
 		<script src="webdemo/js/effects/RenderPass.js"></script>
 		<script src="webdemo/js/effects/MaskPass.js"></script> 
-		<script src="webdemo/js/effects/sketch.js"></script> 
+		<script src="webdemo/js/effects/sketch.js"></script>
+
+		<script src="webdemo/js/TweenLite.min.js"></script>
+		<script src="webdemo/js/TimelineLite.min.js"></script>
+		<script src="webdemo/js/easing/EasePack.min.js"></script>
 		
 		<script>
 		    var AssetsFolder = "webdemo/assets/";
 		    var ToRad = Math.PI / 180;
+		    var ToDeg = 180 / Math.PI;
 			var container, info, gui;
 			var scene, renderer, camera, clock, delta, cam;
 			var sunLight, pointLight, ambient;
@@ -106,6 +110,9 @@
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger;
+
+			var droidTarget;
+			var isMoveMode = false;
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
@@ -183,6 +190,31 @@
 
 				content = new THREE.Object3D();
 				scene.add(content);
+
+				droidTarget = new THREE.Object3D();
+				scene.add(droidTarget);
+
+				var geoo1 = new THREE.CylinderGeometry( 3,3,0.1,24 );
+				var geoo2 = new THREE.CylinderGeometry( 1,0.05,2,24 );
+				var geoo3 = new THREE.CylinderGeometry( 0.2,0.2,6,6 );
+				var matCible = new THREE.MeshPhongMaterial( { color:0xffff00 , shininess:20, specular:0x606060 } );
+				var cible = new THREE.Mesh( geoo1, matCible );
+				
+				var cibleArrow = new THREE.Mesh( geoo2, matCible );
+				var cibleArrow2 = new THREE.Mesh( geoo3, matCible );
+				cible.scale.set(1,1,-1);
+				cibleArrow.scale.set(1,1,-1);
+				cibleArrow2.scale.set(1,1,-1);
+				cible.position.y = 0.2;
+				cibleArrow.position.y = 1.1;
+				cibleArrow2.position.y = 4.1;
+				droidTarget.add(cible);
+				droidTarget.add(cibleArrow);
+				droidTarget.add(cibleArrow2);
+
+				cible.visible = false;
+				cibleArrow.visible = false;
+				cibleArrow2.visible = false;
 
 				// load sea3d model
 				var loader = new THREE.SEA3D( true );	
@@ -390,6 +422,21 @@
 				//if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
 			}
 
+			function droidMoveTo() {
+				var i;
+				if(isMoveMode){
+					isMoveMode = false;
+					for ( i = droidTarget.children.length - 1; i >= 0 ; i -- ) {
+						droidTarget.children[i].visible = false;
+					}
+				} else {
+					isMoveMode = true;
+					for ( i = droidTarget.children.length - 1; i >= 0 ; i -- ) {
+						droidTarget.children[i].visible = true;
+					}
+				}
+			}
+
 			//-----------------------------------------------------
 			//  EVENTS
 			//-----------------------------------------------------
@@ -428,7 +475,9 @@
 				info = "<h2>Kuk-a-droid</h2>";
 				info += "<i>WSAD, ZSQD or Arrow key to move</i><br>";
 				info += "<i>press CTRL for lateral mouvement</i><br><br>";
-				info += "Position x:"+ youbot.position.x.toFixed(2) + " y:" + youbot.position.z.toFixed(2);
+				info += "Position X: "+ (youbot.position.x*10).toFixed(0) + " mm<br>"
+				info += "Position Z: " + (youbot.position.z*10).toFixed(0)+ " mm<br>"; 
+				info += "Rotation:"+ unwrapDegrees(youbot.rotation.y*ToDeg).toFixed(0)+"°";
 				document.getElementById('info').innerHTML = info;
 			}
 
@@ -626,22 +675,24 @@
 				return bone;
 			}
 
+
+
 			//-----------------------------------------------------
 			//  GUI
 			//-----------------------------------------------------
 
-			var jointConfig = { joint_1:0, joint_2:90, joint_3:90, joint_4:0, joint_5:0, finger:0 };
-			var options = {physics:false, showBones:false, sketchMode:false};
+			var jointConfig = { posx:0, posy:0, posz:0, rotation:0, joint_1:0, joint_2:25, joint_3:-10, joint_4:0, joint_5:0, finger:0 };
+			var options = {physics:false, showBones:false, sketchMode:false, MoveToPoint:droidMoveTo};
 			var emotions = {quiet:false, anger:false, frustration:false, fear:false, distress:false, disgust:false, sorrow:false, surprise:false, interest:false, boredom:false, joy:false};
 
 			function addGUI() {
 				gui = new dat.GUI();
 				var f0 = gui.addFolder('ARM');
-				f0.add( jointConfig, 'joint_1', -170, 170 ).listen().onChange( function() { arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_2', 0, 170 ).listen().onChange( function() { arm_joint_2.rotation.y = jointConfig.joint_2 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_3', -45, 225 ).listen().onChange( function() { arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_4', -110, 110 ).listen().onChange( function() { arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_5', 0, 360 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; emotionsStop(); });
+				f0.add( jointConfig, 'joint_1', -169, 169 ).listen().onChange( function() { arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad; emotionsStop(); });
+				f0.add( jointConfig, 'joint_2', -65, 90 ).listen().onChange( function() { arm_joint_2.rotation.y = (jointConfig.joint_2+65) * ToRad; emotionsStop(); });
+				f0.add( jointConfig, 'joint_3', -151, 146 ).listen().onChange( function() { arm_joint_3.rotation.y = (jointConfig.joint_3+100) * ToRad; emotionsStop(); });
+				f0.add( jointConfig, 'joint_4', -102.5, 102.5 ).listen().onChange( function() { arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad; emotionsStop(); });
+				f0.add( jointConfig, 'joint_5', -165, 165 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; emotionsStop(); });
 				f0.add( jointConfig, 'finger', 0, 3 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; emotionsStop(); });
 				f0.open();
 
@@ -649,6 +700,7 @@
 				f1.add( options, 'physics' ).onChange( function() { startPhysics() });
 				f1.add( options, 'showBones' ).onChange( function() { showBones() });
 				f1.add( options, 'sketchMode' ).onChange( function() { showSketch() });
+				f1.add( options, 'MoveToPoint');
 				f1.open();
 
 				var f2 = gui.addFolder('EMOTIONS');
@@ -726,15 +778,15 @@
 			var expTween;
 
 			function addAnimation() {
-				TweenLite.to(jointConfig, 3, {joint_2: 0, joint_3: 180, joint_4:-110, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
-				TweenLite.to(jointConfig, 0.5, {joint_5:180, finger:3, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
+				TweenLite.to(jointConfig, 3, {joint_2: -65, joint_3: 80, joint_4:-110, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
+				TweenLite.to(jointConfig, 0.5, {joint_5:165, finger:3, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
 				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate, onComplete: animationEnd });
 			}
 
 			function animationUpdate() {
 				arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad;
-				arm_joint_2.rotation.y = jointConfig.joint_2 * ToRad;
-				arm_joint_3.rotation.y = jointConfig.joint_3 * ToRad;
+				arm_joint_2.rotation.y = (jointConfig.joint_2+65) * ToRad;
+				arm_joint_3.rotation.y = (jointConfig.joint_3+100) * ToRad;
 				arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad;
 				arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad;
 				right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger;
@@ -766,13 +818,67 @@
 
 			function animationQuiet() {
 				var look = -20 + (Math.random()*40);
-				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look*0.5, joint_2: 0, joint_3: 180, joint_4:-110, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
-				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look, joint_2: 10, joint_3: 170, joint_4:-120, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationQuiet });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look*0.5, joint_2: -65, joint_3: 90, joint_4:-110, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look, joint_2: -55, joint_3: 80, joint_4:-120, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationQuiet });
 			}
 
 			function animationAnger() {
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: 0, joint_3: 180, joint_4:-110, joint_5:90, finger:3, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: 10, joint_3: 120, joint_4:-120, joint_5:0,  finger:0, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:169, joint_2: -65, joint_3: 90, joint_4:-110, joint_5:90, finger:3, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:169, joint_2: -55, joint_3: 30, joint_4:-120, joint_5:0,  finger:0, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
+			}
+
+			function animationFrustration() {
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:0, joint_2: -65, joint_3: 90, joint_4:-110, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:0, joint_2: -55, joint_3: 80, joint_4:-120, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationFrustration });
+			}
+
+
+
+
+
+			// timeline test
+			/*function animationTimeLine() {
+				//create a TimelineLite instance
+				var tl = new TimelineLite();
+				//append a to() tween
+				tl.to(element, 1, {width:"50%"});
+				//add another sequenced tween (by default, tweens are added to the end of the timeline which makes sequencing simple)
+				tl.to(element, 1, {height:"300px", ease:Elastic.easeOut});
+				//offset the next tween by 0.75 seconds so there's a gap between the end of the previous tween and this new one
+				tl.to(element, 1, {opacity:0.5}, "+=0.75");
+				//overlap the next tween with the previous one by 0.5 seconds (notice the negative offset at the end)
+				tl.to(element, 1, {backgroundColor:"#FF0000"}, "-=0.5");
+				//animate 3 elements (e1, e2, and e3) to a rotation of 60 degrees, and stagger their start times by 0.2 seconds
+				tl.staggerTo([e1, e2, e3], 1, {rotation:60}, 0.2);
+				//then call myFunction()
+				tl.call(myFunction);
+				//now we can control the entire sequence with the standard methods like these:
+				tl.pause();
+				tl.resume();
+				tl.restart();
+				tl.reverse();
+				tl.play();
+				//jump to exactly 2.5 seconds into the animation
+				tl.seek(2.5);
+				//slow down playback to 10% of the normal speed
+				tl.timeScale(0.1);
+				//add a label named "myLabel" at exactly 3 seconds:
+				tl.add("myLabel", 3);
+				//add a tween that starts at "myLabel"
+				tl.add( TweenLite.to(element, 1, {scale:0.5}), "myLabel");
+				//jump to "myLabel" and play from there:
+				tl.play("myLabel");
+			}*/
+
+			//-----------------------------------------------------
+			//  MATH
+			//-----------------------------------------------------
+
+			function unwrapDegrees(r) {
+				r = r % 360;
+				if (r > 180) r -= 360;
+				if (r < -180) r += 360;
+				return r;
 			}
 
 		</script>
