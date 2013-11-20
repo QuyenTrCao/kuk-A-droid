@@ -1,7 +1,7 @@
 "use strict";
 var camPos = {w: 100, h:100, horizontal: 40, vertical: 60, distance: 300, automove: false};
-var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
-var mouse = {x: 0, y: 0, down:false, over:false, ox: 0, oy: 0, h: 0, v: 0, mx:0, my:0};
+var vsize = { x:window.innerWidth, y:window.innerHeight };
+var mouse = {x: 0, y: 0, down:false, over:false, ox: 0, oy: 0, h: 0, v: 0, mx:0, my:0, moving:true};
 var center = new THREE.Vector3(0,0,0);
 var ToRad = Math.PI / 180;
 var DomElement;
@@ -14,6 +14,8 @@ function CameraLoth(domElement) {
 	scene.add(camera);
 	moveCamera();
 
+	//this.vsize = {x:0, y:0};
+
 	this.domElement.addEventListener( 'mousemove', onMouseMove, false );
 	this.domElement.addEventListener( 'touchmove', onTouchMove, false );
 	this.domElement.addEventListener( 'mousedown', onMouseDown, false );
@@ -24,6 +26,12 @@ function CameraLoth(domElement) {
 	DomElement = this.domElement;
 }
 
+function setViewSize(x, y) {
+	vsize.x = x;
+	vsize.y = y;
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+}
 
 //-----------------------------------------------------
 //  MOUSE
@@ -56,8 +64,8 @@ function onMouseDown(e) {
 	//var decalx = (vsize.x - sizeListe[size].w)*0.5;
 	//var decaly = (vsize.y - sizeListe[size].h)*0.5;
 
-   // mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
-	//mouse.my = - ( e.clientY / (sizeListe[size].h+100) ) * 2 + 1;
+    mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+	mouse.my = -( e.clientY / vsize.y) * 2 + 1;
 
 	mouse.down = true;
 
@@ -72,13 +80,23 @@ function onMouseUp(e) {
 
 function onMouseMove(e) {
 	e.preventDefault();
+
+	
+
 	if (mouse.down && !camPos.automove ) {
-		document.body.style.cursor = 'move';
-		mouse.x = e.clientX;
-		mouse.y = e.clientY;
-		camPos.horizontal = (-(mouse.x - mouse.ox) * 0.3) + mouse.h;
-		camPos.vertical = (-(mouse.y - mouse.oy) * 0.3) + mouse.v;
-		moveCamera();
+		
+	    if (mouse.moving) {
+			document.body.style.cursor = 'move';
+			mouse.x = e.clientX;
+			mouse.y = e.clientY;
+			
+			camPos.horizontal = (-(mouse.x - mouse.ox) * 0.3) + mouse.h;
+			camPos.vertical = (-(mouse.y - mouse.oy) * 0.3) + mouse.v;
+			moveCamera();
+	    } else {
+	    	mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+	    	mouse.my = -( e.clientY / vsize.y ) * 2 + 1;
+	    }
 	}
 }
 
