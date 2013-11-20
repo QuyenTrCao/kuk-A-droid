@@ -242,7 +242,7 @@
 					document.getElementById('loading').style.visibility = 'hidden';
 					createRobot();
 				};
-				loader.load( AssetsFolder + "youbot_cam.sea" );
+				loader.load( AssetsFolder + "youbot.sea" );
 
 				stats = new Stats();
 				stats.domElement.style.position	= 'absolute';
@@ -284,7 +284,7 @@
 				textures[5] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint2.jpg" );
 				textures[6] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint3.jpg" );
 				textures[7] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint4.jpg" );
-				textures[8] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint5_cam.jpg" );
+				textures[8] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint5.jpg" );
 
 				for(i = 0; i!== textures.length; i++){
 					textures[i].repeat.set( 1, -1 );
