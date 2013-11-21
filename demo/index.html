@@ -14,8 +14,8 @@
 				background-color: #4D4D4D;
 				overflow: hidden;
 				font-size: 11px;
-				height: 100%;
 				color: #9D9D9D;
+				height: 100%;
 				margin: 0px;
 			}
 			#info {
@@ -56,7 +56,6 @@
 		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 		  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
 		  ga('create', 'UA-45001095-2', 'arn-o.github.io');
 		  ga('send', 'pageview');
 		</script>
@@ -110,7 +109,7 @@
 			var materials = [];
 			// mesh
 			var wheels = [];
-			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger;
+			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger, portable, ecran;
 
 			var droidTarget;
 			var isMoveMode = false;
@@ -130,8 +129,6 @@
 				scene = new THREE.Scene();
 				cam = new CameraLoth(container);
 				setViewSize(window.innerWidth, window.innerHeight);
-				//camera.aspect = window.innerWidth / window.innerHeight;
-				//camera.updateProjectionMatrix();
 				camera.scale.set(-1, 1, 1);
 
 				projector = new THREE.Projector();
@@ -263,6 +260,9 @@
 					if(name === "arm_base_frame") arm_base = base.children[i];
 					if(name === "plate") plate = base.children[i];
 				}
+				portable = plate.children[0];
+				ecran = portable.children[0];
+
 				arm_joint_1 = arm_base.children[0];
 				arm_joint_2 = arm_joint_1.children[0];
 				arm_joint_3 = arm_joint_2.children[0];
@@ -285,6 +285,7 @@
 				textures[6] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint3.jpg" );
 				textures[7] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint4.jpg" );
 				textures[8] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint5.jpg" );
+				textures[9] = new THREE.ImageUtils.loadTexture( AssetsFolder + "portable.jpg" );
 
 				for(i = 0; i!== textures.length; i++){
 					textures[i].repeat.set( 1, -1 );
@@ -293,7 +294,6 @@
 				}
 
 				// material
-				
 				var shine = 10;
 				var specular = 0x606060;
 				materials[0] = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
@@ -306,6 +306,10 @@
 				materials[7] = new THREE.MeshPhongMaterial( { map: textures[7], shininess:shine, specular:specular } );
 				materials[8] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
 				materials[9] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
+				materials[10] = new THREE.MeshPhongMaterial( { map: textures[9], shininess:shine, specular:specular } );
+				camTexture();
+				materials[11] = new THREE.MeshPhongMaterial( { map:finalRenderTarget, shininess:shine, specular:specular } );
+
 
 
 				// apply material
@@ -319,6 +323,10 @@
 				arm_joint_5.material = materials[8];
 				right_finger.material = materials[9];
 				left_finger.material = materials[9];
+
+				portable.material = materials[10];
+				ecran.material = materials[11];
+				
 
 				// add root model
 				youbot.add( base );
@@ -465,16 +473,27 @@
 			}
 
 			//-----------------------------------------------------
+			//  CAMERA TEXTURE
+			//-----------------------------------------------------
+
+			var textureCamera, finalRenderTarget;
+
+			function camTexture() {
+				textureCamera = new THREE.PerspectiveCamera( 120, 600 /1024, 1, 1000 );
+			    textureCamera.scale.set(-1, 1, 1);
+				arm_joint_5.add(textureCamera);
+				textureCamera.position.set(5, 4, 0);
+				textureCamera.lookAt( new THREE.Vector3(5,10,0) )
+				finalRenderTarget = new THREE.WebGLRenderTarget( 512, 1024, { format: THREE.RGBFormat } );
+			}
+
+			//-----------------------------------------------------
 			//  EVENTS
 			//-----------------------------------------------------
 			
-
 			function onResize() {
 				setViewSize(window.innerWidth, window.innerHeight);
-				//camera.aspect = window.innerWidth / window.innerHeight;
-				//camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
-
 				if(isSketch){
 					composer.setSize(window.innerWidth,window.innerHeight);
 					pass.uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
@@ -498,6 +517,7 @@
 					pass.uniforms.tColor.value=colorBuffer;
 					composer.render();
 			    }
+			    if(textureCamera) renderer.render( scene, textureCamera, finalRenderTarget, true );
 				stats.update();
 			}
 
@@ -517,7 +537,6 @@
 
 			var OimoWorker;
 			var isPhysicsOn = false;
-
 			var geo01 = new THREE.CubeGeometry( 1, 1, 1 );
 			var geo02 = new THREE.SphereGeometry( 1, 6, 4);
 			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );
@@ -705,8 +724,6 @@
 				return bone;
 			}
 
-
-
 			//-----------------------------------------------------
 			//  GUI
 			//-----------------------------------------------------
@@ -743,8 +760,8 @@
 			//  SKETCH MODE
 			//-----------------------------------------------------
 
-			var composer,pass,colorBuffer;
-			var parameters={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBFormat,stencilBuffer:false};
+			var composer, pass, colorBuffer;
+			var parameters={minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBFormat,stencilBuffer:false};
 			var isSketch = false;
 
 			function showSketch() {
@@ -798,7 +815,6 @@
 					renderer.setClearColor(0x4D4D4D);
 					isSketch = false;
 				}
-
 			}
 
 			//-----------------------------------------------------
@@ -808,9 +824,9 @@
 			var expTween;
 
 			function addAnimation() {
-				TweenLite.to(jointConfig, 3, {joint_2: -65, joint_3: 80, joint_4:-102.5, delay:5, onUpdate: animationUpdate, onComplete: animationEnd });
-				TweenLite.to(jointConfig, 0.5, {joint_5:160, finger:3, delay:8, onUpdate: animationUpdate, onComplete: animationEnd });
-				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate, onComplete: animationEnd });
+				TweenLite.to(jointConfig, 3, {joint_2: -65, joint_3: 80, joint_4:-102.5, delay:5, onUpdate: animationUpdate});
+				TweenLite.to(jointConfig, 0.5, {joint_5:160, finger:3, delay:8, onUpdate: animationUpdate});
+				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate});
 			}
 
 			function animationUpdate() {
@@ -853,8 +869,8 @@
 			}
 
 			function animationAnger() {
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:169, joint_2: -65, joint_3: 90, joint_4:-90, joint_5:90, finger:3, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
-				expTween = TweenLite.to(jointConfig, 1, {joint_1:169, joint_2: -55, joint_3: 30, joint_4:-102, joint_5:0,  finger:0, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: -50, joint_3: 40, joint_4:-20, joint_5:0, finger:2, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:150, joint_2: -40, joint_3: -20, joint_4:-50, joint_5:0,  finger:1, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
 			}
 
 			function animationFrustration() {
