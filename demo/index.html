@@ -110,6 +110,7 @@
 			// mesh
 			var wheels = [];
 			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger, portable, ecran;
+			var rope_1_2, rope_2_3, rope_3_4;
 
 			var droidTarget;
 			var isMoveMode = false;
@@ -228,24 +229,71 @@
 				cibleArrow2.visible = false;
 
 				// load sea3d model
-				var loader = new THREE.SEA3D( true );	
+				var loader = new THREE.SEA3D( true );
 				
 				loader.onComplete = function( e ) {
 					for (var i=0; i !== loader.meshes.length; i++){
 						if(loader.meshes[i].name === "base_frame" ) base = loader.meshes[i];
 						if(loader.meshes[i].name === "bot_wheel_R" ) wheel_geo_r = THREE.BufferGeometryUtils.fromGeometry(loader.meshes[i].geometry);//loader.meshes[i].geometry;
 						if(loader.meshes[i].name === "bot_wheel_L" ) wheel_geo_l = THREE.BufferGeometryUtils.fromGeometry(loader.meshes[i].geometry);//loader.meshes[i].geometry;
+						// test
+						if(loader.meshes[i].name === "rope_3_4" ) rope_3_4 = loader.meshes[i];
+						if(loader.meshes[i].name === "rope_2_3" ) rope_2_3 = loader.meshes[i];
+						if(loader.meshes[i].name === "rope_1_2" ) rope_1_2 = loader.meshes[i];
 					}
 					document.getElementById('loading').style.visibility = 'hidden';
 					createRobot();
 				};
-				loader.load( AssetsFolder + "youbot.sea" );
+				loader.load( AssetsFolder + "youbot_c.sea" );
 
 				stats = new Stats();
 				stats.domElement.style.position	= 'absolute';
 				stats.domElement.style.right	= '10px';
 				stats.domElement.style.bottom	= '6px';
 				document.body.appendChild( stats.domElement );
+			}
+
+			var animSize = [];
+			var animFrame = [];
+
+			function createRope() {
+				rope_1_2.material = materials[12];
+				rope_2_3.material = materials[12];
+				rope_3_4.material = materials[12];
+
+				rope_1_2.position.set(0,0,0);
+				rope_2_3.position.set(0,0,0);
+				rope_3_4.position.set(0,0,0);
+
+				rope_1_2.rotation.x = -180*ToRad;
+				rope_2_3.rotation.x = -90*ToRad;
+				rope_2_3.rotation.z = -90*ToRad;
+				rope_3_4.rotation.x = -90*ToRad;
+				rope_3_4.rotation.z = -180*ToRad;
+
+				arm_joint_1.add(rope_1_2);
+				arm_joint_2.add(rope_2_3);
+				arm_joint_3.add(rope_3_4);
+
+				animSize[0] = rope_1_2.currentAnimation.data.length;
+				animFrame[0] = animSize[0]/155;
+
+				animSize[1] = rope_2_3.currentAnimation.data.length;
+				animFrame[1] = animSize[1]/297;
+
+				animSize[2] = rope_3_4.currentAnimation.data.length;
+				animFrame[2] = animSize[2]/205;
+
+				updateRope();
+			}
+
+			function updateRope() {
+				rope_1_2.play('rotate', animSize[0] - (animFrame[0]*(jointConfig.joint_2+65)));
+				rope_1_2.pause();
+				rope_2_3.play('rotate', animSize[1] - (animFrame[1]*(jointConfig.joint_3+151)));
+				rope_2_3.pause();
+				rope_3_4.play('rotate', animSize[2] - (animFrame[2]*(jointConfig.joint_4+102.5)));
+				rope_3_4.pause();
 			}
 
 			function createRobot() {
@@ -286,6 +334,7 @@
 				textures[7] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint4.jpg" );
 				textures[8] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint5.jpg" );
 				textures[9] = new THREE.ImageUtils.loadTexture( AssetsFolder + "portable.jpg" );
+				textures[10] = new THREE.ImageUtils.loadTexture( AssetsFolder + "rope.jpg" );
 
 				for(i = 0; i!== textures.length; i++){
 					textures[i].repeat.set( 1, -1 );
@@ -309,8 +358,7 @@
 				materials[10] = new THREE.MeshPhongMaterial( { map: textures[9], shininess:shine, specular:specular } );
 				camTexture();
 				materials[11] = new THREE.MeshPhongMaterial( { map:finalRenderTarget, shininess:shine, specular:specular } );
-
-
+				materials[12] = new THREE.MeshPhongMaterial( { map: textures[10], shininess:shine, specular:specular, skinning:true } );
 
 				// apply material
 				base.material = materials[1];
@@ -327,6 +375,8 @@
 				portable.material = materials[10];
 				ecran.material = materials[11];
 				
+				// test cable rope
+				createRope();
 
 				// add root model
 				youbot.add( base );
@@ -503,6 +553,7 @@
 
 			function animate() {
 				delta = clock.getDelta();
+				THREE.AnimationHandler.update( delta );
 				render(delta);
 				requestAnimationFrame( animate );
 				displayInfo();
@@ -527,7 +578,7 @@
 				info += "<i>press CTRL for lateral mouvement</i><br><br>";
 				info += "Position X: "+ (youbot.position.x*10).toFixed(0) + " mm<br>"
 				info += "Position Z: " + (youbot.position.z*10).toFixed(0)+ " mm<br>"; 
-				info += "Rotation:"+ unwrapDegrees(youbot.rotation.y*ToDeg).toFixed(0)+"°";
+				info += "Rotation:"+ unwrapDegrees(youbot.rotation.y*ToDeg).toFixed(0)+"°<br>";
 				document.getElementById('info').innerHTML = info;
 			}
 
@@ -735,12 +786,12 @@
 			function addGUI() {
 				gui = new dat.GUI();
 				var f0 = gui.addFolder('ARM');
-				f0.add( jointConfig, 'joint_1', -169, 169 ).listen().onChange( function() { arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_2', -65, 90 ).listen().onChange( function() { arm_joint_2.rotation.y = (jointConfig.joint_2+65) * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_3', -151, 146 ).listen().onChange( function() { arm_joint_3.rotation.y = (jointConfig.joint_3+100) * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_4', -102.5, 102.5 ).listen().onChange( function() { arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'joint_5', -165, 165 ).listen().onChange( function() { arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad; emotionsStop(); });
-				f0.add( jointConfig, 'finger', 0, 3 ).listen().onChange( function() { right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger; emotionsStop(); });
+				f0.add( jointConfig, 'joint_1', -169, 169 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_2', -65, 90 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_3', -151, 146 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_4', -102.5, 102.5 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_5', -165, 165 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'finger', 0, 3 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
 				f0.open();
 
 				var f1 = gui.addFolder('OPTION');
@@ -830,15 +881,23 @@
 			}
 
 			function animationUpdate() {
-				arm_joint_1.rotation.y = jointConfig.joint_1 * ToRad;
-				arm_joint_2.rotation.y = (jointConfig.joint_2+65) * ToRad;
-				arm_joint_3.rotation.y = (jointConfig.joint_3+100) * ToRad;
-				arm_joint_4.rotation.y = jointConfig.joint_4 * ToRad;
-				arm_joint_5.rotation.y = jointConfig.joint_5 * ToRad;
-				right_finger.position.z = jointConfig.finger; left_finger.position.z = -jointConfig.finger;
+				arm_joint_1.rotation.y = jointLimite(jointConfig.joint_1, -169, 169) * ToRad;
+				arm_joint_2.rotation.y = (jointLimite(jointConfig.joint_2, -65, 90)+65) * ToRad;
+				arm_joint_3.rotation.y = (jointLimite(jointConfig.joint_3, -151, 146)+100) * ToRad;
+				arm_joint_4.rotation.y = jointLimite(jointConfig.joint_4, -102.5, 102.5) * ToRad;
+				arm_joint_5.rotation.y = jointLimite(jointConfig.joint_5, -165, 165) * ToRad;
+				
+				var fingerMove = jointLimite(jointConfig.finger, 0, 3);
+				right_finger.position.z = fingerMove; 
+				left_finger.position.z = -fingerMove;
+
+				updateRope();
 			}
 
-			function animationEnd() {
+			function jointLimite(v, min, max){
+				if(v<min)v=min;
+				if(v>max)v=max;
+				return v;
 			}
 
 			function emotionsStop() {
