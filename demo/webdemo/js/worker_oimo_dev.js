@@ -235,7 +235,7 @@ function creatDroid(){
     sc.friction = 1;
     sc.density = 0.1;
     var platform =  addRigid({type:"boxd", size:[22,6.5,25], pos:[0,9.5,-14.5], sc:sc, move:true, noSleep:true});
-joints[4] = addJoint({type:"wheel", body1:droid, body2:platform, pos1:[0, 4.5+3.25, -14.5], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], collision:true });
+    joints[4] = addJoint({type:"wheel", body1:droid, body2:platform, pos1:[0, 4.5+3.25, -14.5], axis1:[0, -1, 0], axis2:[-1, 0, 0], limit:[0,0], collision:true });
 
 
     arms[0] =  addRigid({type:"boxd", size:[20,8.5,20], pos:[0,9.5,16.6], sc:sc, move:true, noSleep:true});

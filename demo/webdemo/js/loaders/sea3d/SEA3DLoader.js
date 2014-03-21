@@ -1,5 +1,5 @@
 /**
- * 	SEA3D.js + Three.js
+ * 	SEA3D.js + three.js
  * 	Copyright (C) 2013 Sunag Entertainment 
  * 
  * 	http://code.google.com/p/sea3d/
@@ -61,7 +61,7 @@ THREE.Mesh.prototype.dispose = function () {
 
 THREE.Mesh.prototype.CLONE = THREE.Mesh.prototype.clone;
 THREE.Mesh.prototype.clone = function ( object ) {
-	var obj = THREE.Mesh.prototype.CLONE.call( this, object );
+	var obj = this.CLONE( object );
 	
 	if (obj.animation)
 		obj.animation = this.animation.clone( obj );
@@ -125,7 +125,7 @@ THREE.SkinnedMesh.prototype.dispose = function () {
 
 THREE.SkinnedMesh.prototype.CLONE = THREE.SkinnedMesh.prototype.clone;
 THREE.SkinnedMesh.prototype.clone = function ( object ) {
-	var obj = THREE.SkinnedMesh.prototype.CLONE.call( this, object );
+	var obj = this.CLONE( object );
 	
 	obj.animations = [];
 	
@@ -276,9 +276,9 @@ THREE.SEA3D.prototype.scaleColor = function(color, scale) {
 }
 
 THREE.SEA3D.prototype.applyMatrix = function(obj3d, mtx, invZ) {
-	obj3d.position.getPositionFromMatrix( mtx );
+	obj3d.position.setFromMatrixPosition( mtx );
 	obj3d.rotation.setFromRotationMatrix( mtx );	
-	obj3d.scale.getScaleFromMatrix( mtx );	
+	obj3d.scale.setFromMatrixScale( mtx );
 	
 	if (invZ) {
 		obj3d.position.z = -obj3d.position.z;
@@ -530,7 +530,7 @@ THREE.SEA3D.prototype.readGeometry = function(sea) {
 		var jointPerVertex = sea.jointPerVertex;
 		
 		if (jointPerVertex > 4) {
-			console.warn( "WebGLRenderer: Joint Per Vertex can not be greater than 4 (currently " + sea.jointPerVertex + "). Using compression for joints." );
+			//console.warn( "WebGLRenderer: Joint Per Vertex can not be greater than 4 (currently " + sea.jointPerVertex + "). Using compression for joints." );
 			for (k = 0; k < sea.joint.length; k+=jointPerVertex) {
 				
 				var jointIndex = [0];
@@ -939,7 +939,7 @@ THREE.SEA3D.prototype.readSkeleton = function(sea) {
 			mtx.multiplyMatrices( mtx_inv, mtx );	
 		}
 		
-		pos.getPositionFromMatrix( mtx );
+		pos.setFromMatrixPosition( mtx );
 		quat.setFromRotationMatrix( mtx );				
 				
 		bones[i] = {
@@ -1120,12 +1120,7 @@ THREE.SEA3D.prototype.onError = function(  ) {
 //
 
 THREE.SEA3D.prototype.load = function( url ) {			
-	this.loadBytes();
-	this.file.load(url);		
-}
-
-THREE.SEA3D.prototype.loadBytes = function( data ) {			
-	this.file = new SEA3D.File( data );
+	this.file = new SEA3D.File();
 	this.file.scope = this;
 	this.file.onComplete = this.onComplete;
 	this.file.onProgress = this.onProgress;
@@ -1152,5 +1147,5 @@ THREE.SEA3D.prototype.loadBytes = function( data ) {
 	this.file.typeRead[SEA3D.PNG.prototype.type] = this.readImage;	
 	this.file.typeRead[SEA3D.GIF.prototype.type] = this.readImage;	
 	
-	if (data) this.file.read();	
+	this.file.load(url);		
 }
